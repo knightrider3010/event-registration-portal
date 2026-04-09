@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Rush | EventOrg</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Agency+FB&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Base Theme Variables */
+        :root {
+            --bg-color: #0d0d12;
+            --surface-color: rgba(255, 255, 255, 0.05);
+            --primary-accent: #ff4a57;
+            --secondary-accent: #ff8f70;
+            --success-color: #00e676;
+            --text-main: #ffffff;
+            --text-muted: #a0a0b0;
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* --- Header & Sidebar --- */
+        .header { position: fixed; top: 0; width: 100%; height: 80px; display: flex; justify-content: space-between; align-items: center; padding: 0 5%; background: rgba(13, 13, 18, 0.8); backdrop-filter: blur(15px); border-bottom: 1px solid var(--glass-border); z-index: 1000; }
+        .logo-container { display: flex; align-items: center; gap: 20px; }
+        .menu-trigger { font-size: 24px; cursor: pointer; color: var(--text-main); transition: color 0.3s; }
+        .menu-trigger:hover { color: var(--primary-accent); }
+        .logo { font-family: 'Agency FB', sans-serif; font-size: 32px; font-weight: bold; letter-spacing: 2px; }
+        .logo-main { color: var(--text-main); } .logo-accent { color: var(--primary-accent); }
+        .nav-links { display: flex; list-style: none; gap: 30px; }
+        .nav-links a { text-decoration: none; color: var(--text-muted); font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s ease; position: relative; }
+        .nav-links a:hover, .nav-links a.active { color: var(--text-main); }
+        .nav-links a::after { content: ''; position: absolute; width: 0; height: 2px; bottom: -5px; left: 0; background: linear-gradient(90deg, var(--primary-accent), var(--secondary-accent)); transition: width 0.3s ease; }
+        .nav-links a:hover::after, .nav-links a.active::after { width: 100%; }
+        .auth-btn { background: linear-gradient(45deg, var(--primary-accent), var(--secondary-accent)); border: none; padding: 10px 25px; color: white; font-weight: 600; border-radius: 30px; cursor: pointer; transition: transform 0.3s ease, box-shadow 0.3s; letter-spacing: 1px; }
+        .auth-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255, 74, 87, 0.4); }
+
+        .sidebar { position: fixed; top: 0; left: -350px; width: 350px; height: 100vh; background: rgba(20, 20, 28, 0.95); backdrop-filter: blur(20px); border-right: 1px solid var(--glass-border); z-index: 1001; transition: left 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); padding: 40px; display: flex; flex-direction: column; }
+        .sidebar.active { left: 0; }
+        .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; border-bottom: 1px solid var(--glass-border); padding-bottom: 15px; }
+        .close-btn { font-size: 30px; cursor: pointer; color: var(--text-muted); transition: color 0.3s; }
+        .close-btn:hover { color: var(--primary-accent); }
+        .sidebar-links { display: flex; flex-direction: column; gap: 20px; }
+        .sidebar-links a { text-decoration: none; color: var(--text-main); font-size: 18px; transition: all 0.3s ease; }
+        .sidebar-links a:hover { color: var(--primary-accent); transform: translateX(10px); }
+        .menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(3px); z-index: 1000; opacity: 0; visibility: hidden; transition: all 0.4s ease; }
+        .menu-overlay.active { opacity: 1; visibility: visible; }
+
+        /* --- Game Styles --- */
+        .page { padding-top: 80px; width: 100%; display: flex; flex-direction: column; align-items: center; }
+        
+        .game-header-info { text-align: center; padding: 30px 5%; max-width: 800px; }
+        .glass-heading { font-family: 'Agency FB', sans-serif; font-size: 50px; letter-spacing: 4px; margin-bottom: 10px; background: linear-gradient(to right, #fff, var(--text-muted)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-transform: uppercase; }
+        
+        .game-wrapper {
+            width: 100vw;
+            height: 75vh;
+            min-height: 500px;
+            position: relative;
+            border-top: 2px solid var(--primary-accent);
+            border-bottom: 2px solid var(--primary-accent);
+            background: #050508;
+            overflow: hidden;
+            box-shadow: inset 0 0 100px rgba(255, 74, 87, 0.1);
+        }
+
+        canvas { display: block; width: 100%; height: 100%; }
+
+        .game-score-board {
+            position: absolute;
+            top: 30px;
+            left: 5%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 15px 30px;
+            border-radius: 40px;
+            border: 1px solid rgba(255, 74, 87, 0.3);
+            font-family: 'Agency FB', sans-serif;
+            font-size: 32px;
+            color: #fff;
+            z-index: 10;
+            letter-spacing: 2px;
+            display: flex;
+            gap: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .game-score-board span { color: var(--success-color); text-shadow: 0 0 15px rgba(0, 230, 118, 0.6); }
+
+        .game-overlay { 
+            position: absolute; 
+            top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(5, 5, 8, 0.85); 
+            backdrop-filter: blur(8px); 
+            display: flex; flex-direction: column; 
+            justify-content: center; align-items: center; 
+            z-index: 20; transition: opacity 0.4s ease, visibility 0.4s ease; 
+        }
+        .game-overlay.hidden { opacity: 0; visibility: hidden; }
+
+        .game-title { font-family: 'Agency FB', sans-serif; font-size: 100px; color: #fff; margin-bottom: 10px; text-shadow: 0 0 30px var(--primary-accent); letter-spacing: 6px; text-align: center; line-height: 1; }
+        
+        .game-btn { 
+            background: linear-gradient(45deg, var(--primary-accent), var(--secondary-accent)); 
+            border: none; padding: 18px 50px; color: white; 
+            font-weight: bold; font-size: 20px; border-radius: 40px; 
+            cursor: pointer; transition: all 0.3s ease; letter-spacing: 2px; font-family: 'Agency FB', sans-serif;
+            box-shadow: 0 10px 30px rgba(255, 74, 87, 0.4);
+            margin-top: 20px;
+        }
+        .game-btn:hover { transform: translateY(-3px) scale(1.05); box-shadow: 0 15px 40px rgba(255, 74, 87, 0.6); }
+
+        .controls-hint {
+            display: flex; gap: 15px; margin-top: 30px; color: var(--text-muted); font-size: 14px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; align-items: center;
+        }
+        .key-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 6px; color: #fff; }
+
+        /* Reward Box */
+        .reward-box {
+            background: rgba(0, 230, 118, 0.1); border: 2px dashed var(--success-color);
+            padding: 25px; border-radius: 15px; margin: 20px 0 30px; text-align: center;
+            display: none; animation: pulseReward 2s infinite alternate; backdrop-filter: blur(10px);
+        }
+        .reward-box.active { display: block; }
+        .reward-box h4 { color: #fff; font-size: 22px; margin-bottom: 10px; font-family: 'Agency FB', sans-serif; letter-spacing: 1px;}
+        .reward-code { font-family: monospace; font-size: 32px; color: var(--success-color); font-weight: bold; letter-spacing: 4px; text-shadow: 0 0 15px rgba(0,230,118,0.6); }
+
+        @keyframes pulseReward { 0% { box-shadow: 0 0 10px rgba(0, 230, 118, 0.2); } 100% { box-shadow: 0 0 40px rgba(0, 230, 118, 0.6); } }
+
+        /* --- Animations --- */
+        .animate-fade-up { opacity: 0; transform: translateY(30px); animation: fadeUp 0.8s forwards ease-out; }
+        .delay-100 { animation-delay: 0.1s; }
+        @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 900px) {
+            .nav-links, .auth-btn { display: none; }
+            .game-title { font-size: 60px; }
+            .controls-hint { flex-direction: column; align-items: center; gap: 5px; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+    <div class="logo-container">
+        <div class="menu-trigger" onclick="toggleMenu()">☰</div>
+        <div class="logo"><span class="logo-main">EVENT</span><span class="logo-accent">ORG</span></div>
+    </div>
+    
+    <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="events.html">Events</a></li>
+        <li><a href="register.html">Register</a></li>
+        <li><a href="community.html">Community</a></li>
+        <li><a href="merch.html">Merch</a></li>
+        <li><a href="ticket.html">Tickets</a></li>
+    </ul>
+
+  <div class="header-right">
+    <button class="auth-btn" onclick="window.location.href='login.html'">LOGIN</button>
+    
+    <button class="auth-btn" onclick="window.location.href='cart.html'">
+        CART (<span id="globalCartCount">0</span>)
+    </button>
+</div>
+</header>
+
+    <div class="menu-overlay" id="menuOverlay" onclick="toggleMenu()"></div>
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h3 style="font-family:'Agency FB'; font-size:24px; color:#fff;">QUICK MENU</h3>
+            <div class="close-btn" onclick="toggleMenu()">×</div>
+        </div>
+        <div class="sidebar-links">
+            <a href="game.html" style="color:var(--primary-accent); font-weight: bold;">⚡ Play Neon Rush</a>
+            <a href="ticket.html">Payment & Tickets</a>
+            <a href="contact.html">Support Center</a>
+        </div>
+    </div>
+
+    <section class="page">
+        <div class="game-header-info animate-fade-up">
+            <h1 class="glass-heading">TICKET RUSH</h1>
+            <p style="color: var(--text-muted); font-size: 16px;">
+                Dodge the red lasers, collect the green orbs. <br><strong style="color:#fff;">Reach 1,000 points to unlock an exclusive discount code for your next event!</strong>
+            </p>
+        </div>
+
+        <div class="game-wrapper animate-fade-up delay-100">
+            <div class="game-score-board">SCORE: <span id="scoreVal">0</span></div>
+            <canvas id="gameCanvas"></canvas>
+            
+            <div id="startScreen" class="game-overlay">
+                <h2 class="game-title">NEON RUSH</h2>
+                <button class="game-btn" onclick="startGame()">INITIATE SEQUENCE</button>
+                <div class="controls-hint">
+                    <span>Move with</span> 
+                    <span class="key-btn">A</span> <span class="key-btn">D</span> 
+                    <span>or</span>
+                    <span class="key-btn">←</span> <span class="key-btn">→</span>
+                    <span>(Mobile: Tap sides)</span>
+                </div>
+            </div>
+            
+            <div id="gameOverScreen" class="game-overlay hidden">
+                <h2 class="game-title" style="color: #ff4a57; text-shadow: 0 0 30px #ff4a57;">CRITICAL FAILURE</h2>
+                <p style="font-size:30px; color:#F5F5F5; margin-bottom:20px; font-family: 'Agency FB';">Final Score: <strong id="finalScore" style="color:var(--success-color);">0</strong></p>
+                
+                <div id="rewardBox" class="reward-box">
+                    <h4>🎉 COUPON UNLOCKED! 🎉</h4>
+                    <p style="font-size:14px; color:#aaa; margin-bottom: 10px;">Use this code at checkout for 20% off tickets:</p>
+                    <div class="reward-code">NEONRUSH20</div>
+                </div>
+
+                <p id="missedRewardText" style="color: #aaa; font-size: 16px; margin-bottom: 30px;">
+                    Reach 1,000 points to unlock a reward!
+                </p>
+
+                <button class="game-btn" onclick="startGame()">REBOOT SYSTEM</button>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        function toggleMenu() {
+            document.getElementById('sidebar').classList.toggle('active');
+            document.getElementById('menuOverlay').classList.toggle('active');
+        }
+
+        // --- Keyboard & Touch Controls ---
+        const keys = { left: false, right: false };
+        
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.left = true;
+            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keys.right = true;
+            if(["Space","ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].indexOf(e.code) > -1) {
+                e.preventDefault(); // Prevent page scrolling
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.left = false;
+            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keys.right = false;
+        });
+
+        // Mobile Touch Zones
+        const canvasEl = document.getElementById('gameCanvas');
+        canvasEl.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touchX = e.touches[0].clientX;
+            if (touchX < window.innerWidth / 2) keys.left = true;
+            else keys.right = true;
+        }, { passive: false });
+
+        canvasEl.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            keys.left = false;
+            keys.right = false;
+        }, { passive: false });
+
+
+        // --- Pure 2D Game Engine ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        let animationId;
+        
+        let score = 0;
+        const TARGET_SCORE = 1000;
+        let gameSpeed = 6;
+        let gameState = 'MENU'; // 'MENU', 'PLAYING', 'CRASHED'
+        let frameCount = 0;
+        let shakeFrames = 0;
+        let gridOffset = 0;
+
+        function resizeCanvas() {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Entities
+        const player = { x: canvas.width/2, y: canvas.height - 100, size: 20, vx: 0, acc: 1.5, maxSpeed: 10, friction: 0.85, trail: [] };
+        let obstacles = [];
+        let tickets = [];
+        let particles = [];
+        let floatingTexts = [];
+
+        // Particles
+        class Particle {
+            constructor(x, y, color, speedMulti = 1) {
+                this.x = x; this.y = y; this.color = color;
+                const angle = Math.random() * Math.PI * 2;
+                const speed = (Math.random() * 8 + 2) * speedMulti;
+                this.vx = Math.cos(angle) * speed;
+                this.vy = Math.sin(angle) * speed;
+                this.life = 1.0;
+                this.decay = Math.random() * 0.03 + 0.01;
+                this.size = Math.random() * 4 + 2;
+            }
+            update() {
+                this.x += this.vx; this.y += this.vy;
+                this.life -= this.decay;
+            }
+            draw() {
+                ctx.globalAlpha = Math.max(0, this.life);
+                ctx.fillStyle = this.color;
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = this.color;
+                ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fill();
+                ctx.globalAlpha = 1.0;
+                ctx.shadowBlur = 0;
+            }
+        }
+
+        class FloatingText {
+            constructor(x, y, text, color) {
+                this.x = x; this.y = y; this.text = text; this.color = color;
+                this.life = 1.0;
+            }
+            update() { this.y -= 2; this.life -= 0.02; }
+            draw() {
+                ctx.globalAlpha = Math.max(0, this.life);
+                ctx.fillStyle = this.color;
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = this.color;
+                ctx.font = "bold 28px 'Agency FB'";
+                ctx.fillText(this.text, this.x - 20, this.y);
+                ctx.globalAlpha = 1.0;
+                ctx.shadowBlur = 0;
+            }
+        }
+
+        function createExplosion(x, y, color, count, speedMulti = 1) {
+            for(let i=0; i<count; i++) particles.push(new Particle(x, y, color, speedMulti));
+        }
+
+        function startGame() {
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('gameOverScreen').classList.add('hidden');
+            
+            score = 0; 
+            gameSpeed = 6; 
+            obstacles = []; 
+            tickets = []; 
+            particles = [];
+            floatingTexts = [];
+            player.trail = [];
+            
+            player.x = canvas.width / 2;
+            player.vx = 0;
+            player.y = canvas.height - 100;
+            
+            gameState = 'PLAYING';
+            frameCount = 0;
+            shakeFrames = 0;
+            
+            document.getElementById('scoreVal').innerText = score;
+            
+            cancelAnimationFrame(animationId);
+            animate();
+        }
+
+        function drawBackground() {
+            // Dark Background
+            ctx.fillStyle = '#050508';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 2D Scrolling Grid
+            ctx.strokeStyle = 'rgba(255, 74, 87, 0.15)';
+            ctx.lineWidth = 1;
+            
+            gridOffset = (gridOffset + gameSpeed) % 60;
+            
+            // Vertical Lines
+            for(let x = 0; x < canvas.width; x += 60) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            // Horizontal Scrolling Lines
+            for(let y = gridOffset - 60; y < canvas.height; y += 60) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+        }
+
+        function drawPlayer() {
+            // Physics
+            if (keys.left) player.vx -= player.acc;
+            if (keys.right) player.vx += player.acc;
+            
+            player.vx *= player.friction;
+            if (player.vx > player.maxSpeed) player.vx = player.maxSpeed;
+            if (player.vx < -player.maxSpeed) player.vx = -player.maxSpeed;
+            
+            player.x += player.vx;
+            
+            // Constrain
+            if (player.x < player.size) { player.x = player.size; player.vx = 0; }
+            if (player.x > canvas.width - player.size) { player.x = canvas.width - player.size; player.vx = 0; }
+            
+            // Trail
+            player.trail.push({x: player.x, y: player.y + player.size});
+            if (player.trail.length > 8) player.trail.shift();
+
+            ctx.beginPath();
+            if(player.trail.length > 0) {
+                ctx.moveTo(player.trail[0].x, player.trail[0].y);
+                for(let i=1; i<player.trail.length; i++) ctx.lineTo(player.trail[i].x, player.trail[i].y);
+            }
+            ctx.strokeStyle = 'rgba(0, 230, 118, 0.4)';
+            ctx.lineWidth = player.size * 0.8;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+
+            // 2D Flat Ship (Triangle)
+            ctx.save();
+            ctx.translate(player.x, player.y);
+            
+            // Slight tilt based on velocity for juice
+            ctx.rotate(player.vx * 0.03);
+
+            // Engine Flame
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = '#00e676';
+            ctx.fillStyle = (frameCount % 4 < 2) ? '#fff' : '#00e676';
+            ctx.beginPath();
+            ctx.moveTo(-player.size/2, player.size/2);
+            ctx.lineTo(player.size/2, player.size/2);
+            ctx.lineTo(0, player.size/2 + Math.random() * 20 + 10);
+            ctx.closePath();
+            ctx.fill();
+
+            // Ship Body
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#fff';
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.moveTo(0, -player.size);
+            ctx.lineTo(player.size, player.size/2);
+            ctx.lineTo(-player.size, player.size/2);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        function spawnObjects() {
+            // Spawn logic
+            if (frameCount % Math.max(15, Math.floor(50 - gameSpeed*1.5)) === 0) {
+                const width = Math.random() * 120 + 80;
+                const x = Math.random() * (canvas.width - width);
+                obstacles.push({ x: x, y: -50, width: width, height: 20 });
+            }
+            if (frameCount % 40 === 0 && Math.random() > 0.3) {
+                const x = Math.random() * (canvas.width - 60) + 30;
+                tickets.push({ x: x, y: -50, size: 15 });
+            }
+        }
+
+        function renderObjects() {
+            let currentSpeed = gameState === 'CRASHED' ? gameSpeed * 0.1 : gameSpeed;
+
+            // Obstacles
+            for(let i = obstacles.length - 1; i >= 0; i--) {
+                let obs = obstacles[i];
+                obs.y += currentSpeed;
+                
+                ctx.fillStyle = '#1a0505';
+                ctx.strokeStyle = '#ff4a57';
+                ctx.lineWidth = 3;
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = '#ff4a57';
+                
+                ctx.beginPath();
+                ctx.roundRect(obs.x, obs.y, obs.width, obs.height, 5);
+                ctx.fill();
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+
+                // Collision
+                if (gameState === 'PLAYING') {
+                    if (player.x > obs.x - player.size && player.x < obs.x + obs.width + player.size &&
+                        player.y > obs.y - player.size && player.y < obs.y + obs.height + player.size) {
+                        triggerCrash();
+                    }
+                }
+
+                if (obs.y > canvas.height + 50) obstacles.splice(i, 1);
+            }
+
+            // Tickets (Orbs)
+            for(let i = tickets.length - 1; i >= 0; i--) {
+                let t = tickets[i];
+                t.y += currentSpeed;
+                
+                ctx.beginPath();
+                ctx.arc(t.x, t.y, t.size, 0, Math.PI * 2);
+                ctx.fillStyle = '#00e676';
+                ctx.shadowBlur = 25;
+                ctx.shadowColor = '#00e676';
+                ctx.fill();
+                
+                ctx.beginPath();
+                ctx.arc(t.x, t.y, t.size/2, 0, Math.PI * 2);
+                ctx.fillStyle = '#fff';
+                ctx.fill();
+                ctx.shadowBlur = 0;
+
+                // Collection
+                if (gameState === 'PLAYING') {
+                    const dist = Math.hypot(player.x - t.x, player.y - t.y);
+                    if (dist < player.size + t.size) {
+                        score += 100;
+                        document.getElementById('scoreVal').innerText = score;
+                        createExplosion(t.x, t.y, '#00e676', 15);
+                        floatingTexts.push(new FloatingText(t.x, t.y, "+100", "#00e676"));
+                        tickets.splice(i, 1);
+                        
+                        if(score % 500 === 0) gameSpeed += 1;
+                    }
+                }
+                
+                if (t.y > canvas.height + 50) tickets.splice(i, 1);
+            }
+        }
+
+        function triggerCrash() {
+            gameState = 'CRASHED';
+            shakeFrames = 25;
+            createExplosion(player.x, player.y, '#ff4a57', 60, 2); 
+            createExplosion(player.x, player.y, '#fff', 30, 3);    
+            
+            setTimeout(() => {
+                document.getElementById('finalScore').innerText = score;
+                const rewardBox = document.getElementById('rewardBox');
+                const missedText = document.getElementById('missedRewardText');
+                
+                if (score >= TARGET_SCORE) {
+                    rewardBox.classList.add('active');
+                    missedText.style.display = 'none';
+                } else {
+                    rewardBox.classList.remove('active');
+                    missedText.style.display = 'block';
+                    missedText.innerText = `Only ${TARGET_SCORE - score} more points needed to unlock a reward!`;
+                }
+                document.getElementById('gameOverScreen').classList.remove('hidden');
+            }, 1000);
+        }
+
+        function animate() {
+            frameCount++;
+            
+            ctx.save();
+            // Screen Shake
+            if (shakeFrames > 0) {
+                const dx = (Math.random() - 0.5) * 15;
+                const dy = (Math.random() - 0.5) * 15;
+                ctx.translate(dx, dy);
+                shakeFrames--;
+            }
+
+            drawBackground();
+
+            if (gameState === 'PLAYING') {
+                spawnObjects();
+                drawPlayer();
+            }
+            
+            renderObjects();
+
+            // Particles & Text
+            for(let i = particles.length - 1; i >= 0; i--) {
+                particles[i].update();
+                particles[i].draw();
+                if(particles[i].life <= 0) particles.splice(i, 1);
+            }
+            for(let i = floatingTexts.length - 1; i >= 0; i--) {
+                floatingTexts[i].update();
+                floatingTexts[i].draw();
+                if(floatingTexts[i].life <= 0) floatingTexts.splice(i, 1);
+            }
+
+            ctx.restore(); 
+
+            animationId = requestAnimationFrame(animate);
+        }
+
+        drawBackground();
+        
+    </script>
+</body>
+</html>

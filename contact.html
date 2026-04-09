@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact | EventOrg</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Agency+FB:wght@700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Base Theme Variables */
+        :root {
+            --bg-color: #0d0d12;
+            --surface-color: rgba(255, 255, 255, 0.05);
+            --primary-accent: #ff4a57;
+            --secondary-accent: #ff8f70;
+            --text-main: #ffffff;
+            --text-muted: #a0a0b0;
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* --- HEAVY KINETIC BACKGROUND EFFECT --- */
+        .bg-visuals {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 30px;
+            background: radial-gradient(circle at center, #1a1a24 0%, #0d0d12 100%);
+            overflow: hidden;
+        }
+
+        .row-container {
+            width: 100%;
+            overflow: hidden;
+            padding: 10px 0;
+            mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+        }
+
+        .scroll-row { display: flex; width: fit-content; gap: 20px; }
+        .animate-ltr { animation: scrollLTR 60s linear infinite; }
+        .animate-rtl { animation: scrollRTL 60s linear infinite; }
+
+        @keyframes scrollLTR { from { transform: translateX(-50%); } to { transform: translateX(0%); } }
+        @keyframes scrollRTL { from { transform: translateX(0%); } to { transform: translateX(-50%); } }
+
+        .bg-card {
+            width: 380px; height: 240px; flex-shrink: 0; border-radius: 15px;
+            overflow: hidden; border: 1px solid var(--glass-border);
+            filter: grayscale(100%) brightness(0.3);
+            transition: 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .bg-card img { width: 100%; height: 100%; object-fit: cover; }
+        .bg-card:hover { filter: grayscale(0%) brightness(0.8); transform: scale(1.05); border-color: var(--primary-accent); }
+
+        /* --- Header & Buttons --- */
+        .header { position: fixed; top: 0; width: 100%; height: 80px; display: flex; justify-content: space-between; align-items: center; padding: 0 5%; background: rgba(13, 13, 18, 0.7); backdrop-filter: blur(20px); border-bottom: 1px solid var(--glass-border); z-index: 1000; }
+        .logo-container { display: flex; align-items: center; gap: 20px; }
+        .menu-trigger { font-size: 24px; cursor: pointer; color: var(--text-main); transition: color 0.3s; }
+        .logo { font-family: 'Agency FB', sans-serif; font-size: 32px; font-weight: bold; letter-spacing: 2px; }
+        .logo-accent { color: var(--primary-accent); }
+        
+        .nav-links { display: flex; list-style: none; gap: 30px; }
+        .nav-links a { text-decoration: none; color: var(--text-muted); font-weight: 600; font-size: 14px; text-transform: uppercase; transition: 0.3s; }
+        .nav-links a:hover { color: var(--text-main); }
+
+        .auth-btn { 
+            background: linear-gradient(45deg, var(--primary-accent), var(--secondary-accent)); 
+            border: none; padding: 10px 25px; color: white; font-weight: 600; border-radius: 30px; 
+            cursor: pointer; transition: transform 0.3s ease, box-shadow 0.3s; 
+            text-transform: uppercase; font-size: 12px;
+        }
+        .auth-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(255, 74, 87, 0.6); }
+
+        /* --- Sidebar & Overlay --- */
+        .sidebar { position: fixed; top: 0; left: -350px; width: 350px; height: 100vh; background: rgba(20, 20, 28, 0.98); backdrop-filter: blur(20px); border-right: 1px solid var(--glass-border); z-index: 1001; transition: left 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); padding: 40px; display: flex; flex-direction: column; }
+        .sidebar.active { left: 0; }
+        .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; border-bottom: 1px solid var(--glass-border); padding-bottom: 15px; }
+        .close-btn { font-size: 30px; cursor: pointer; color: var(--text-muted); transition: color 0.3s; }
+        .sidebar-links { display: flex; flex-direction: column; gap: 20px; }
+        .sidebar-links a { text-decoration: none; color: var(--text-main); font-size: 18px; transition: all 0.3s ease; }
+        .sidebar-links a:hover { color: var(--primary-accent); transform: translateX(10px); }
+        .menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(3px); z-index: 1000; opacity: 0; visibility: hidden; transition: all 0.4s ease; }
+        .menu-overlay.active { opacity: 1; visibility: visible; }
+
+        /* --- Contact Section --- */
+        .section { padding: 150px 5% 100px; display: flex; justify-content: center; align-items: center; min-height: 100vh; position: relative; z-index: 2; }
+        .glass-card { 
+            background: rgba(13, 13, 20, 0.85); 
+            backdrop-filter: blur(20px); 
+            border: 1px solid var(--glass-border); 
+            border-radius: 24px; padding: 50px; 
+            width: 100%; max-width: 600px; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        .glass-heading { font-family: 'Agency FB'; font-size: 50px; letter-spacing: 3px; margin-bottom: 30px; text-align: center; }
+
+        /* --- AI CHAT SYSTEM --- */
+        .ai-bot-trigger { position: fixed; bottom: 30px; right: 30px; width: 70px; height: 70px; background: linear-gradient(135deg, var(--primary-accent), var(--secondary-accent)); border-radius: 50%; display: flex; justify-content: center; align-items: center; color: #fff; font-size: 24px; font-weight: bold; cursor: pointer; z-index: 1000; animation: pulseBot 2s infinite; }
+        @keyframes pulseBot { 0% { box-shadow: 0 0 0 0 rgba(255, 74, 87, 0.7); } 70% { box-shadow: 0 0 0 20px rgba(255, 74, 87, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 74, 87, 0); } }
+        .ai-chat-window { position: fixed; bottom: 110px; right: 30px; width: 350px; height: 450px; background: rgba(20, 20, 28, 0.95); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 20px; display: flex; flex-direction: column; overflow: hidden; opacity: 0; visibility: hidden; transform: translateY(20px); transition: 0.4s; z-index: 1000; }
+        .ai-chat-window.active { opacity: 1; visibility: visible; transform: translateY(0); }
+        .ai-header { padding: 20px; background: rgba(255, 255, 255, 0.05); border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; font-weight: bold; }
+        .ai-messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
+        .bot-msg { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 12px; align-self: flex-start; border-bottom-left-radius: 4px; font-size: 14px; }
+        .user-msg { background: var(--primary-accent); padding: 12px; border-radius: 12px; align-self: flex-end; border-bottom-right-radius: 4px; font-size: 14px; }
+        .ai-input-area { padding: 15px; border-top: 1px solid var(--glass-border); display: flex; gap: 10px; }
+        .ai-input-area input { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); padding: 10px; border-radius: 20px; color: #fff; outline: none; }
+        .ai-input-area button { background: var(--primary-accent); border: none; width: 40px; height: 40px; border-radius: 50%; color: #fff; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div class="bg-visuals">
+        <div class="row-container"><div class="scroll-row animate-ltr" id="row1"></div></div>
+        <div class="row-container"><div class="scroll-row animate-rtl" id="row2"></div></div>
+    </div>
+
+    <header class="header">
+        <div class="logo-container">
+            <div class="menu-trigger" onclick="toggleMenu()">☰</div>
+            <div class="logo">EVENT<span class="logo-accent">ORG</span></div>
+        </div>
+        <ul class="nav-links">
+            <li><a href="index.html" class="active">Home</a></li>
+            <li><a href="events.html">Events</a></li>
+            <li><a href="register.html">Register</a></li>
+            <li><a href="community.html">Community</a></li>
+            <li><a href="merch.html">Merch</a></li>
+            <li><a href="ticket.html">Tickets</a></li>
+        </ul>
+        <div class="header-right">
+    <button class="auth-btn" onclick="window.location.href='login.html'">LOGIN</button>
+    
+    <button class="auth-btn" onclick="window.location.href='cart.html'">
+        CART (<span id="globalCartCount">0</span>)
+    </button>
+</div>
+    </header>
+
+    <div class="menu-overlay" id="menuOverlay" onclick="toggleMenu()"></div>
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h3 style="font-family:'Agency FB'; font-size:24px; color:#fff;">QUICK MENU</h3>
+            <div class="close-btn" onclick="toggleMenu()">×</div>
+        </div>
+        <div class="sidebar-links">
+            <a href="game.html" style="color:var(--primary-accent); font-weight: bold;">⚡ Play Neon Rush</a>
+            <a href="ticket.html">Payment & Tickets</a>
+            <a href="contact.html">Support Center</a>
+        </div>
+    </div>
+
+    <section class="section">
+        <div class="glass-card">
+            <h1 class="glass-heading">CONTACT US</h1>
+            <form onsubmit="event.preventDefault(); alert('Message Sent!');">
+                <input type="text" placeholder="Full Name" required style="width:100%; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); padding:15px; border-radius:12px; color:#fff; margin-bottom:20px; outline:none;">
+                <input type="email" placeholder="Email Address" required style="width:100%; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); padding:15px; border-radius:12px; color:#fff; margin-bottom:20px; outline:none;">
+                <textarea placeholder="Your Message" required style="width:100%; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); padding:15px; border-radius:12px; color:#fff; margin-bottom:20px; outline:none; height:150px; resize:none;"></textarea>
+                <button type="submit" class="auth-btn" style="width:100%; padding: 18px; font-size: 14px;">SEND MESSAGE</button>
+            </form>
+        </div>
+    </section>
+
+    <div class="ai-bot-trigger" onclick="toggleAI()">AI</div>
+    <div class="ai-chat-window" id="aiChatWindow">
+        <div class="ai-header"><span>EventOrg AI</span><span onclick="toggleAI()" style="cursor:pointer">×</span></div>
+        <div class="ai-messages" id="aiMessages">
+            <div class="bot-msg">Hi! How can I help you today?</div>
+        </div>
+        <div class="ai-input-area">
+            <input id="aiInput" placeholder="Type a message..." onkeypress="if(event.key==='Enter') sendAiMessage()">
+            <button onclick="sendAiMessage()">❯</button>
+        </div>
+    </div>
+
+    <script>
+        // Menu Toggle Logic
+        function toggleMenu() {
+            document.getElementById('sidebar').classList.toggle('active');
+            document.getElementById('menuOverlay').classList.toggle('active');
+        }
+
+        function toggleAI() { 
+            document.getElementById('aiChatWindow').classList.toggle('active'); 
+        }
+        
+        function sendAiMessage() {
+            const input = document.getElementById('aiInput');
+            const container = document.getElementById('aiMessages');
+            if(!input.value.trim()) return;
+
+            const userDiv = document.createElement('div');
+            userDiv.className = 'user-msg';
+            userDiv.textContent = input.value;
+            container.appendChild(userDiv);
+            
+            const val = input.value;
+            input.value = '';
+            container.scrollTop = container.scrollHeight;
+
+            setTimeout(() => {
+                const botDiv = document.createElement('div');
+                botDiv.className = 'bot-msg';
+                botDiv.textContent = "Processing your request regarding '" + val + "'...";
+                container.appendChild(botDiv);
+                container.scrollTop = container.scrollHeight;
+            }, 1000);
+        }
+
+        const imgUrls = [
+            'https://images.unsplash.com/photo-1540575861501-7ce0e220abb1?auto=format&fit=crop&w=600',
+            'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=600',
+            'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?auto=format&fit=crop&w=600',
+            'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?auto=format&fit=crop&w=600'
+        ];
+
+        function populateRow(rowId, images) {
+            const row = document.getElementById(rowId);
+            [...images, ...images].forEach(url => {
+                const card = document.createElement('div');
+                card.className = 'bg-card';
+                card.innerHTML = `<img src="${url}">`;
+                row.appendChild(card);
+            });
+        }
+
+        window.onload = () => {
+            populateRow('row1', imgUrls);
+            populateRow('row2', [...imgUrls].reverse());
+            const cart = JSON.parse(localStorage.getItem('eventOrgCart')) || [];
+            document.getElementById('globalCartCount').innerText = cart.length;
+        };
+    </script>
+</body>
+</html>

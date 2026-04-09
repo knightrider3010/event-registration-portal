@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cart | EventOrg</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Agency+FB&display=swap" rel="stylesheet">
+    
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #0d0d12;
+            --surface-color: rgba(255, 255, 255, 0.05);
+            --primary-accent: #ff4a57;
+            --secondary-accent: #ff8f70;
+            --success-color: #00e676;
+            --text-main: #ffffff;
+            --text-muted: #a0a0b0;
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* --- BACKGROUND SYSTEM --- */
+        .bg-visuals { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; display: flex; flex-direction: column; justify-content: center; gap: 30px; background: radial-gradient(circle at center, #1a1a24 0%, #0d0d12 100%); overflow: hidden; }
+        .row-container { width: 100%; overflow: hidden; mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent); }
+        .scroll-row { display: flex; width: fit-content; gap: 20px; }
+        .animate-ltr { animation: scrollLTR 60s linear infinite; }
+        .animate-rtl { animation: scrollRTL 60s linear infinite; }
+        @keyframes scrollLTR { from { transform: translateX(-50%); } to { transform: translateX(0%); } }
+        @keyframes scrollRTL { from { transform: translateX(0%); } to { transform: translateX(-50%); } }
+        .bg-card { width: 380px; height: 240px; flex-shrink: 0; border-radius: 15px; overflow: hidden; border: 1px solid var(--glass-border); filter: grayscale(100%) brightness(0.3); }
+        .bg-card img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* --- HEADER --- */
+        .header { position: fixed; top: 0; width: 100%; height: 80px; display: flex; justify-content: space-between; align-items: center; padding: 0 5%; background: rgba(13, 13, 18, 0.8); backdrop-filter: blur(15px); border-bottom: 1px solid var(--glass-border); z-index: 1000; }
+        .logo-container { display: flex; align-items: center; gap: 20px; }
+        .menu-trigger { font-size: 24px; cursor: pointer; color: var(--text-main); transition: color 0.3s; }
+        .logo { font-family: 'Agency FB', sans-serif; font-size: 32px; font-weight: bold; letter-spacing: 2px; }
+        .logo-main { color: var(--text-main); } .logo-accent { color: var(--primary-accent); }
+        .nav-links { display: flex; list-style: none; gap: 30px; }
+        .nav-links a { text-decoration: none; color: var(--text-muted); font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s ease; position: relative; }
+        .nav-links a:hover, .nav-links a.active { color: var(--text-main); }
+        .nav-links a::after { content: ''; position: absolute; width: 0; height: 2px; bottom: -5px; left: 0; background: linear-gradient(90deg, var(--primary-accent), var(--secondary-accent)); transition: width 0.3s ease; }
+        .auth-btn { background: linear-gradient(45deg, var(--primary-accent), var(--secondary-accent)); border: none; padding: 10px 25px; color: white; font-weight: 600; border-radius: 30px; cursor: pointer; transition: transform 0.3s ease; letter-spacing: 1px; }
+
+        /* --- CART CONTENT --- */
+        .cart-page { padding: 120px 5% 50px; max-width: 1200px; margin: 0 auto; display: flex; gap: 40px; position: relative; z-index: 2; }
+        .items-section { flex: 1.5; }
+        .summary-section { flex: 1; position: sticky; top: 120px; height: fit-content; }
+        .glass-card { background: rgba(13, 13, 20, 0.85); border: 1px solid var(--glass-border); border-radius: 20px; padding: 40px; backdrop-filter: blur(20px); }
+        .glass-heading { font-family: 'Agency FB', sans-serif; font-size: 40px; letter-spacing: 2px; margin-bottom: 30px; color: #fff; }
+
+        .cart-item { display: flex; align-items: center; gap: 20px; padding: 20px 0; border-bottom: 1px solid var(--glass-border); transition: 0.3s; }
+        .item-icon { font-size: 30px; background: rgba(255,255,255,0.05); width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; border-radius: 12px; }
+        .item-details { flex: 1; }
+
+        .remove-btn {
+            background: rgba(255, 74, 87, 0.1);
+            color: var(--primary-accent);
+            border: 1px solid rgba(255, 74, 87, 0.2);
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+            font-size: 16px;
+        }
+        .remove-btn:hover { background: var(--primary-accent); color: white; }
+
+        .qty-controls { display: flex; align-items: center; gap: 15px; background: rgba(0,0,0,0.2); padding: 5px 15px; border-radius: 20px; border: 1px solid var(--glass-border); }
+        .qty-btn { background: none; border: none; color: #fff; cursor: pointer; font-size: 20px; }
+        
+        .btn-primary { width: 100%; margin-top: 25px; padding: 18px; border-radius: 30px; background: linear-gradient(45deg, var(--primary-accent), var(--secondary-accent)); color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .sidebar { position: fixed; top: 0; left: -350px; width: 350px; height: 100vh; background: rgba(20, 20, 28, 0.95); backdrop-filter: blur(20px); border-right: 1px solid var(--glass-border); z-index: 1001; transition: 0.4s; padding: 40px; display: flex; flex-direction: column; }
+        .sidebar.active { left: 0; }
+        .menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; opacity: 0; visibility: hidden; transition: 0.4s; }
+        .menu-overlay.active { opacity: 1; visibility: visible; }
+    </style>
+</head>
+<body>
+
+    <div class="bg-visuals">
+        <div class="row-container"><div class="scroll-row animate-ltr" id="row1"></div></div>
+        <div class="row-container"><div class="scroll-row animate-rtl" id="row2"></div></div>
+    </div>
+
+    <header class="header">
+        <div class="logo-container">
+            <div class="menu-trigger" onclick="toggleMenu()">☰</div>
+            <div class="logo">EVENT<span class="logo-accent">ORG</span></div>
+        </div>
+        <ul class="nav-links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="events.html">Events</a></li>
+            <li><a href="register.html">Register</a></li>
+            <li><a href="community.html">Community</a></li>
+            <li><a href="merch.html">Merch</a></li>
+            <li><a href="ticket.html">Tickets</a></li>
+        </ul>
+        <div class="header-right">
+            <button class="auth-btn" onclick="window.location.href='login.html'">LOGIN</button>
+            <button class="auth-btn" onclick="window.location.href='cart.html'">
+                CART (<span id="globalCartCount">0</span>)
+            </button>
+        </div>
+    </header>
+
+    <div class="menu-overlay" id="menuOverlay" onclick="toggleMenu()"></div>
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h3 style="font-family:'Agency FB'; font-size:24px; color:#fff;">QUICK MENU</h3>
+            <div class="close-btn" onclick="toggleMenu()">×</div>
+        </div>
+        <div class="sidebar-links">
+            <a href="game.html" style="color:var(--primary-accent); font-weight: bold;">⚡ Play Neon Rush</a>
+            <a href="ticket.html">Payment & Tickets</a>
+            <a href="contact.html">Support Center</a>
+        </div>
+    </div>
+
+    <div id="cart-root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const CartPage = () => {
+            const [cart, setCart] = useState(() => JSON.parse(localStorage.getItem('eventOrgCart')) || []);
+
+            useEffect(() => {
+                localStorage.setItem('eventOrgCart', JSON.stringify(cart));
+                const count = cart.reduce((s, i) => s + i.quantity, 0);
+                document.getElementById('globalCartCount').innerText = count;
+            }, [cart]);
+
+            const updateQty = (id, delta) => {
+                setCart(prev => prev.map(item => 
+                    item.id === id ? { ...item, quantity: Math.max(1, item.quantity + delta) } : item
+                ));
+            };
+
+            const removeItem = (id) => {
+                if(confirm("Are you sure you want to remove this item?")) {
+                    setCart(prev => prev.filter(item => item.id !== id));
+                }
+            };
+
+            const subtotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+
+            return (
+                <main className="cart-page">
+                    <div className="items-section">
+                        <div className="glass-card">
+                            <h2 className="glass-heading">Your Selection</h2>
+                            {cart.length === 0 ? (
+                                <p style={{color:'#888', textAlign:'center', padding:'20px'}}>Your cart is empty. <a href="merch.html" style={{color:'var(--primary-accent)'}}>Go Shopping</a></p>
+                            ) : cart.map(item => (
+                                <div className="cart-item" key={item.id}>
+                                    <div className="item-icon">{item.type === 'ticket' ? '🎫' : '👕'}</div>
+                                    <div className="item-details">
+                                        <div className="item-title">{item.title}</div>
+                                        <div style={{color:'var(--success-color)', fontWeight:'bold'}}>₹{item.price.toLocaleString()}</div>
+                                    </div>
+                                    
+                                    {/* Only show +/- if the item is NOT a ticket */}
+                                    {item.type !== 'ticket' ? (
+                                        <div className="qty-controls">
+                                            <button className="qty-btn" onClick={() => updateQty(item.id, -1)}>−</button>
+                                            <span style={{fontSize:'14px', fontWeight:'bold'}}>{item.quantity}</span>
+                                            <button className="qty-btn" onClick={() => updateQty(item.id, 1)}>+</button>
+                                        </div>
+                                    ) : (
+                                        <div style={{marginRight: '20px', fontSize: '14px', color: 'var(--text-muted)'}}>
+                                            Quantity: <strong>{item.quantity}</strong>
+                                        </div>
+                                    )}
+
+                                    <button className="remove-btn" onClick={() => removeItem(item.id)}>🗑️</button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="summary-section">
+                        <div className="glass-card">
+                            <h2 className="glass-heading" style={{fontSize:'28px'}}>Order Summary</h2>
+                            <div style={{display:'flex', justifyContent:'space-between', marginBottom:'15px', color:'var(--text-muted)'}}>
+                                <span>Subtotal</span>
+                                <span>₹{subtotal.toLocaleString()}</span>
+                            </div>
+                            <div style={{display:'flex', justifyContent:'space-between', marginTop:'20px', paddingTop:'20px', borderTop:'1px solid var(--glass-border)', fontSize:'22px', fontWeight:'bold'}}>
+                                <span>TOTAL</span>
+                                <span style={{color:'var(--primary-accent)'}}>₹{(subtotal * 1.05).toLocaleString()}</span>
+                            </div>
+                            <button className="btn-primary" disabled={cart.length === 0} onClick={() => window.location.href='payment.html'}>
+                                Checkout Now
+                            </button>
+                        </div>
+                    </div>
+                </main>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('cart-root'));
+        root.render(<CartPage />);
+
+        window.toggleMenu = () => {
+            document.getElementById('sidebar').classList.toggle('active');
+            document.getElementById('menuOverlay').classList.toggle('active');
+        };
+    </script>
+
+    <script>
+        const imgUrls = ['https://images.unsplash.com/photo-1540575861501-7ce0e220abb1?auto=format&fit=crop&w=600','https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=600','https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?auto=format&fit=crop&w=600'];
+        function populateRow(id) {
+            const row = document.getElementById(id);
+            [...imgUrls, ...imgUrls].forEach(url => {
+                row.innerHTML += `<div class="bg-card"><img src="${url}"></div>`;
+            });
+        }
+        window.onload = () => { populateRow('row1'); populateRow('row2'); };
+    </script>
+</body>
+</html>

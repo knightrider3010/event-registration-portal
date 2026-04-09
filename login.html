@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | EventOrg</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Agency+FB:wght@700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Base Theme Variables */
+        :root {
+            --bg-color: #0d0d12;
+            --surface-color: rgba(255, 255, 255, 0.05);
+            --primary-accent: #ff4a57;
+            --secondary-accent: #ff8f70;
+            --text-main: #ffffff;
+            --text-muted: #a0a0b0;
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --apple-green: #30d158;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* --- HEAVY KINETIC BACKGROUND --- */
+        .bg-visuals {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+            display: flex; flex-direction: column; justify-content: center; gap: 30px;
+            background: radial-gradient(circle at center, #1a1a24 0%, #0d0d12 100%); overflow: hidden;
+        }
+        .row-container { width: 100%; overflow: hidden; padding: 10px 0; mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent); }
+        .scroll-row { display: flex; width: fit-content; gap: 20px; }
+        .animate-ltr { animation: scrollLTR 60s linear infinite; }
+        .animate-rtl { animation: scrollRTL 60s linear infinite; }
+        @keyframes scrollLTR { from { transform: translateX(-50%); } to { transform: translateX(0%); } }
+        @keyframes scrollRTL { from { transform: translateX(0%); } to { transform: translateX(-50%); } }
+
+        .bg-card {
+            width: 380px; height: 240px; flex-shrink: 0; border-radius: 15px; overflow: hidden;
+            border: 1px solid var(--glass-border); filter: grayscale(100%) brightness(0.3);
+            transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1); cursor: pointer;
+        }
+        .bg-card img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.1); transition: transform 0.6s ease; }
+        .bg-card:hover { filter: grayscale(0%) brightness(0.8); transform: scale(1.05); border-color: var(--primary-accent); z-index: 10; }
+        .bg-card:hover img { transform: scale(1); }
+
+        /* --- Header & Dropdown --- */
+        .header { position: fixed; top: 0; width: 100%; height: 80px; display: flex; justify-content: space-between; align-items: center; padding: 0 5%; background: rgba(13, 13, 18, 0.7); backdrop-filter: blur(20px); border-bottom: 1px solid var(--glass-border); z-index: 1000; }
+        .logo-container { display: flex; align-items: center; gap: 20px; }
+        .menu-trigger { font-size: 24px; cursor: pointer; color: var(--text-main); transition: color 0.3s; }
+        .menu-trigger:hover { color: var(--primary-accent); }
+        .logo { font-family: 'Agency FB', sans-serif; font-size: 32px; font-weight: bold; letter-spacing: 2px; }
+        .logo-main { color: var(--text-main); } .logo-accent { color: var(--primary-accent); }
+        .nav-links { display: flex; list-style: none; gap: 30px; }
+        .nav-links a { text-decoration: none; color: var(--text-muted); font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s ease; position: relative; }
+        .nav-links a:hover, .nav-links a.active { color: var(--text-main); }
+        .auth-btn { background: linear-gradient(45deg, var(--primary-accent), var(--secondary-accent)); border: none; padding: 10px 25px; color: white; font-weight: 600; border-radius: 30px; cursor: pointer; transition: transform 0.3s ease, box-shadow 0.3s; letter-spacing: 1px; text-transform: uppercase; }
+
+        /* Account Dropdown */
+        .account-dropdown {
+            position: absolute; top: 75px; right: 5%; background: rgba(20, 20, 28, 0.95);
+            border: 1px solid var(--glass-border); border-radius: 15px; padding: 20px;
+            min-width: 220px; backdrop-filter: blur(25px); box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+            opacity: 0; visibility: hidden; transform: translateY(-10px); transition: 0.3s; z-index: 1001;
+            display: flex; flex-direction: column;
+        }
+        .account-dropdown.show { opacity: 1; visibility: visible; transform: translateY(0); }
+        .dropdown-name { font-weight: bold; font-size: 18px; color: #fff; margin-bottom: 5px; }
+        .dropdown-email { font-size: 13px; color: var(--text-muted); margin-bottom: 15px; border-bottom: 1px solid var(--glass-border); padding-bottom: 15px; }
+        .logout-btn { background: rgba(255, 74, 87, 0.1); color: var(--primary-accent); border: 1px solid rgba(255, 74, 87, 0.3); padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.3s; font-weight: bold; width: 100%;}
+        .logout-btn:hover { background: var(--primary-accent); color: #fff; }
+
+        /* --- Auth Page Content --- */
+        .auth-wrapper { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding-top: 80px; position: relative; z-index: 10; }
+        .auth-card { 
+            background: rgba(13, 13, 20, 0.8); backdrop-filter: blur(25px); border: 1px solid var(--glass-border); 
+            padding: 50px; border-radius: 30px; width: 100%; max-width: 450px; 
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5); text-align: center;
+        }
+        .auth-card h2 { font-family: 'Agency FB'; font-size: 42px; margin-bottom: 30px; letter-spacing: 2px; }
+        .auth-card input { 
+            width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); 
+            padding: 15px 20px; border-radius: 12px; color: #fff; margin-bottom: 15px; outline: none; transition: 0.3s;
+        }
+        .auth-card input:focus { border-color: var(--primary-accent); background: rgba(255,74,87,0.05); }
+
+        .biometric-btn {
+            background: transparent; border: 1px solid var(--secondary-accent); color: var(--secondary-accent);
+            width: 100%; padding: 12px; border-radius: 12px; cursor: pointer; font-weight: 600; 
+            display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 20px; transition: 0.3s;
+        }
+        .biometric-btn:hover { background: rgba(255,143,112,0.1); }
+
+        /* --- SUCCESS POPUP --- */
+        .welcome-popup {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.8);
+            background: rgba(48, 209, 88, 0.15); border: 1px solid var(--apple-green);
+            padding: 30px 50px; border-radius: 20px; backdrop-filter: blur(25px);
+            color: #fff; text-align: center; z-index: 9999; box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            opacity: 0; visibility: hidden; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .welcome-popup.show { opacity: 1; visibility: visible; transform: translate(-50%, -50%) scale(1); }
+        .welcome-popup h3 { font-family: 'Agency FB'; font-size: 36px; margin-bottom: 10px; color: var(--apple-green); letter-spacing: 1px;}
+        .welcome-popup p { font-size: 18px; color: #ddd; }
+
+        /* --- APPLE FACE ID MODAL --- */
+        #faceid-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
+            display: none; justify-content: center; align-items: center; z-index: 2000;
+        }
+        .apple-face-card { width: 240px; height: 240px; background: #1c1c1e; border-radius: 50px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 30px 60px rgba(0,0,0,0.6); }
+        .face-frame { width: 90px; height: 90px; border: 4px solid rgba(255,255,255,0.1); border-radius: 24px; position: relative; margin-bottom: 25px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .scan-line { position: absolute; top: 0; width: 100%; height: 3px; background: var(--apple-green); box-shadow: 0 0 15px var(--apple-green); animation: scanMove 1.5s infinite ease-in-out; }
+        @keyframes scanMove { 0% { top: 0%; } 50% { top: 100%; } 100% { top: 0%; } }
+        .check-svg { display: none; width: 50px; height: 50px; }
+        .check-path { stroke: var(--apple-green); stroke-width: 4; fill: none; stroke-dasharray: 100; stroke-dashoffset: 100; animation: drawCheck 0.6s forwards ease-out; }
+        @keyframes drawCheck { to { stroke-dashoffset: 0; } }
+        .apple-status { font-weight: 600; color: #fff; font-size: 15px; }
+
+        /* Sidebar */
+        .sidebar { position: fixed; top: 0; left: -350px; width: 350px; height: 100vh; background: rgba(20, 20, 28, 0.98); backdrop-filter: blur(20px); border-right: 1px solid var(--glass-border); z-index: 1001; transition: left 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); padding: 40px; display: flex; flex-direction: column; }
+        .sidebar.active { left: 0; }
+        .menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; opacity: 0; visibility: hidden; transition: 0.4s; }
+        .menu-overlay.active { opacity: 1; visibility: visible; }
+    </style>
+</head>
+<body>
+
+    <div class="bg-visuals">
+        <div class="row-container"><div class="scroll-row animate-ltr" id="row1"></div></div>
+        <div class="row-container"><div class="scroll-row animate-rtl" id="row2"></div></div>
+    </div>
+
+    <header class="header">
+        <div class="logo-container">
+            <div class="menu-trigger" onclick="toggleMenu()">☰</div>
+            <div class="logo"><span class="logo-main">EVENT</span><span class="logo-accent">ORG</span></div>
+        </div>
+        <ul class="nav-links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="events.html">Events</a></li>
+            <li><a href="merch.html">Merch</a></li>
+            <li><a href="ticket.html">Tickets</a></li>
+        </ul>
+        <div class="header-right">
+            <button class="auth-btn" id="header-auth-btn" onclick="handleAuthClick()">LOGIN</button>
+            <button class="auth-btn" style="background: rgba(255,255,255,0.1); border: 1px solid var(--glass-border); margin-left: 10px;" onclick="enforceCartAccess()">
+                CART (<span id="globalCartCount">0</span>)
+            </button>
+        </div>
+    </header>
+
+    <div class="account-dropdown" id="account-dropdown">
+        <div class="dropdown-name" id="dd-name">User Name</div>
+        <div class="dropdown-email" id="dd-email">user@email.com</div>
+        <button class="logout-btn" onclick="logout()">LOGOUT</button>
+    </div>
+
+    <div class="menu-overlay" id="menuOverlay" onclick="toggleMenu()"></div>
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h3 style="font-family:'Agency FB'; font-size:24px; color:#fff;">QUICK MENU</h3>
+            <div class="close-btn" onclick="toggleMenu()">×</div>
+        </div>
+        <div class="sidebar-links">
+            <a href="game.html" style="color:var(--primary-accent); font-weight: bold;">⚡ Play Neon Rush</a>
+            <a href="ticket.html">Payment & Tickets</a>
+            <a href="contact.html">Support Center</a>
+        </div>
+    </div>
+
+    <div class="auth-wrapper">
+        <div class="auth-card" id="login-box">
+            <h2>LOGIN</h2>
+            <form id="loginForm">
+                <input type="email" id="l-email" placeholder="Email Address" required>
+                <input type="password" id="l-pass" placeholder="Password" required>
+                <button type="submit" class="auth-btn" style="width:100%; padding:15px;">ACCESS ACCOUNT</button>
+                <div style="margin:20px 0; color:#444;">— OR —</div>
+                <button type="button" class="biometric-btn" onclick="triggerFaceID()">
+                    <span>🔒</span> FACE ID
+                </button>
+                <p style="margin-top:25px; font-size:13px; color:#888;">
+                    No account? <a href="#" onclick="toggleAuth('signup')" style="color:var(--primary-accent); text-decoration:none;">Create one</a>
+                </p>
+            </form>
+        </div>
+
+        <div class="auth-card" id="signup-box" style="display:none;">
+            <h2>SIGN UP</h2>
+            <form id="signupForm">
+                <input type="text" id="s-name" placeholder="Full Name" required>
+                <input type="email" id="s-email" placeholder="Email Address" required>
+                <input type="password" id="s-pass" placeholder="Create Password" required>
+                <button type="submit" class="auth-btn" style="width:100%; padding:15px;">CREATE IDENTITY</button>
+                <p style="margin-top:25px; font-size:13px; color:#888;">
+                    Already a member? <a href="#" onclick="toggleAuth('login')" style="color:var(--primary-accent); text-decoration:none;">Login here</a>
+                </p>
+            </form>
+        </div>
+    </div>
+
+    <div class="welcome-popup" id="welcome-popup">
+        <h3>Login Successful</h3>
+        <p>Welcome back, <strong id="welcome-name" style="color:#fff"></strong>!</p>
+    </div>
+
+    <div id="faceid-modal">
+        <div class="apple-face-card">
+            <div class="face-frame">
+                <div class="scan-line" id="scan-line"></div>
+                <svg class="check-svg" id="check-icon" viewBox="0 0 52 52">
+                    <circle cx="26" cy="26" r="25" fill="none" stroke="rgba(48, 209, 88, 0.2)" stroke-width="2"/>
+                    <path class="check-path" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+                </svg>
+            </div>
+            <div class="apple-status" id="face-text">Face ID</div>
+        </div>
+    </div>
+
+    <script>
+        // ================= DATABASE SYSTEM =================
+        const DB = {
+            getUsers: () => JSON.parse(localStorage.getItem('eo_users')) || [],
+            saveUsers: (users) => localStorage.setItem('eo_users', JSON.stringify(users)),
+
+            addUser: (user) => {
+                const users = DB.getUsers();
+                users.push({ ...user, cart: [] }); // Start with empty cart array
+                DB.saveUsers(users);
+            },
+
+            setSession: (user) => localStorage.setItem('eo_session', JSON.stringify(user)),
+            getSession: () => JSON.parse(localStorage.getItem('eo_session')),
+            logout: () => localStorage.removeItem('eo_session'),
+
+            updateUser: (updatedUser) => {
+                let users = DB.getUsers();
+                users = users.map(u => u.email === updatedUser.email ? updatedUser : u);
+                DB.saveUsers(users);
+                DB.setSession(updatedUser);
+            }
+        };
+
+        // ================= ENFORCE CART LOGIN =================
+        function enforceCartAccess() {
+            const session = DB.getSession();
+            if (session) {
+                window.location.href = 'cart.html';
+            } else {
+                alert("Please Login to access your Cart.");
+                // If not already on login page, send them there
+                if (!window.location.pathname.endsWith('login.html')) {
+                    window.location.href = 'login.html';
+                }
+            }
+        }
+
+        // ================= SIGNUP LOGIC =================
+        document.getElementById('signupForm').onsubmit = (e) => {
+            e.preventDefault();
+            const newUser = {
+                name: document.getElementById('s-name').value,
+                email: document.getElementById('s-email').value,
+                pass: document.getElementById('s-pass').value
+            };
+
+            if(DB.getUsers().some(u => u.email === newUser.email)) {
+                alert("An account already exists with this email.");
+                return;
+            }
+
+            DB.addUser(newUser);
+            alert("Account created successfully! Please Login.");
+            toggleAuth('login');
+        };
+
+        // ================= FORM LOGIN LOGIC =================
+        document.getElementById('loginForm').onsubmit = (e) => {
+            e.preventDefault();
+            const email = document.getElementById('l-email').value;
+            const pass = document.getElementById('l-pass').value;
+
+            const user = DB.getUsers().find(u => u.email === email && u.pass === pass);
+
+            if(user) {
+                processLogin(user);
+            } else {
+                alert("Invalid Credentials. Please try again.");
+            }
+        };
+
+        // ================= PROCESS LOGIN (Shared) =================
+        function processLogin(user) {
+            // 1. Establish Session
+            DB.setSession(user);
+
+            // 2. Restore User's Specific Cart to LocalStorage
+            localStorage.setItem('eventOrgCart', JSON.stringify(user.cart || []));
+
+            // 3. Trigger Welcome UI
+            document.getElementById('welcome-name').innerText = user.name;
+            document.getElementById('welcome-popup').classList.add('show');
+            updateHeaderUI();
+
+            // 4. Redirect
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1500);
+        }
+
+        // ================= FACE ID LOGIC =================
+        function triggerFaceID() {
+            const users = DB.getUsers();
+            if(users.length === 0) {
+                alert("No users registered on this device. Please sign up.");
+                return;
+            }
+
+            const modal = document.getElementById('faceid-modal');
+            const scan = document.getElementById('scan-line');
+            const check = document.getElementById('check-icon');
+            const text = document.getElementById('face-text');
+
+            modal.style.display = "flex";
+            text.innerText = "Verifying...";
+
+            setTimeout(() => {
+                scan.style.display = "none";
+                check.style.display = "block";
+                text.innerText = "Success";
+
+                setTimeout(() => {
+                    modal.style.display = "none";
+                    processLogin(users[0]); // Demo: Logins first registered user
+                }, 1000);
+            }, 2000);
+        }
+
+        // ================= HEADER UI LOGIC =================
+        function updateHeaderUI() {
+            const session = DB.getSession();
+            const btn = document.getElementById('header-auth-btn');
+
+            if(session) {
+                btn.innerText = session.name.split(" ")[0].toUpperCase();
+
+                // Populate Dropdown data
+                document.getElementById('dd-name').innerText = session.name;
+                document.getElementById('dd-email').innerText = session.email;
+            } else {
+                btn.innerText = "LOGIN";
+            }
+        }
+
+        function handleAuthClick() {
+            const session = DB.getSession();
+            if (session) {
+                const dropdown = document.getElementById('account-dropdown');
+                dropdown.classList.toggle('show');
+            } else {
+                window.location.href = "login.html";
+            }
+        }
+
+        function logout() {
+            // Backup the active cart to the user profile before wiping
+            const session = DB.getSession();
+            if(session) {
+                const activeCart = JSON.parse(localStorage.getItem('eventOrgCart')) || [];
+                session.cart = activeCart;
+                DB.updateUser(session);
+            }
+
+            DB.logout();
+            localStorage.removeItem('eventOrgCart');
+            window.location.reload();
+        }
+
+        // ================= CONTINUOUS CART SYNC =================
+        function syncCart() {
+            const session = DB.getSession();
+            if(!session) return;
+            const cart = JSON.parse(localStorage.getItem('eventOrgCart')) || [];
+            session.cart = cart;
+            DB.updateUser(session); // Saves updated cart back to main user object
+        }
+
+        // ================= UI TOGGLES =================
+        function toggleAuth(view) {
+            document.getElementById('login-box').style.display = view === "login" ? "block" : "none";
+            document.getElementById('signup-box').style.display = view === "signup" ? "block" : "none";
+        }
+
+        function toggleMenu() {
+            document.getElementById('sidebar').classList.toggle('active');
+            document.getElementById('menuOverlay').classList.toggle('active');
+        }
+
+        // ================= KINETIC BG =================
+        const imgUrls = [
+            'https://images.unsplash.com/photo-1540575861501-7ce0e220abb1?auto=format&fit=crop&w=600',
+            'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=600',
+            'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?auto=format&fit=crop&w=600'
+        ];
+
+        function populateRow(id) {
+            const row = document.getElementById(id);
+            if(!row) return;
+            [...imgUrls, ...imgUrls].forEach(url => {
+                row.innerHTML += `<div class="bg-card"><img src="${url}"></div>`;
+            });
+        }
+
+        // ================= ON LOAD INIT =================
+        window.onload = () => {
+            populateRow('row1');
+            populateRow('row2');
+            updateHeaderUI();
+
+            const cart = JSON.parse(localStorage.getItem('eventOrgCart')) || [];
+            const countBadge = document.getElementById('globalCartCount');
+
+            if(countBadge) {
+                if (DB.getSession()) {
+                    // Only count total qty of items if logged in
+                    const totalItems = cart.reduce((total, item) => total + (item.quantity || 1), 0);
+                    countBadge.innerText = totalItems;
+                } else {
+                    countBadge.innerText = "0"; // Show 0 if logged out
+                }
+            }
+
+            // Close dropdown if clicking outside
+            document.addEventListener("click", (e) => {
+                const dropdown = document.getElementById('account-dropdown');
+                const btn = document.getElementById('header-auth-btn');
+                if(!e.target.closest("#account-dropdown") && e.target !== btn) {
+                    if(dropdown) dropdown.classList.remove('show');
+                }
+            });
+
+            // Start background sync
+            setInterval(syncCart, 2000);
+        };
+    </script>
+</body>
+</html>

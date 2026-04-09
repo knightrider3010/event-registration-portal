@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tickets | EventOrg</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Agency+FB&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Base Theme Variables */
+        :root {
+            --bg-color: #0d0d12;
+            --surface-color: rgba(255, 255, 255, 0.05);
+            --primary-accent: #ff4a57;
+            --secondary-accent: #ff8f70;
+            --success-color: #00e676;
+            --text-main: #ffffff;
+            --text-muted: #a0a0b0;
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --seat-available: transparent;
+            --seat-selected: #ff4a57;
+            --seat-sold: #2a2a35;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            background-image: radial-gradient(circle at top right, rgba(255, 74, 87, 0.05), transparent 50%),
+                              radial-gradient(circle at bottom left, rgba(122, 75, 53, 0.05), transparent 50%);
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+            padding-bottom: 120px;
+        }
+
+        /* --- Header & Sidebar --- */
+        .header { position: fixed; top: 0; width: 100%; height: 80px; display: flex; justify-content: space-between; align-items: center; padding: 0 5%; background: rgba(13, 13, 18, 0.8); backdrop-filter: blur(15px); border-bottom: 1px solid var(--glass-border); z-index: 1000; }
+        .logo-container { display: flex; align-items: center; gap: 20px; }
+        .menu-trigger { font-size: 24px; cursor: pointer; color: var(--text-main); }
+        .logo { font-family: 'Agency FB', sans-serif; font-size: 32px; font-weight: bold; letter-spacing: 2px; }
+        .logo-main { color: var(--text-main); } .logo-accent { color: var(--primary-accent); }
+        .nav-links { display: flex; list-style: none; gap: 30px; }
+        .nav-links a { text-decoration: none; color: var(--text-muted); font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s ease; position: relative; }
+        .nav-links a:hover, .nav-links a.active { color: var(--text-main); }
+        .nav-links a::after { content: ''; position: absolute; width: 0; height: 2px; bottom: -5px; left: 0; background: linear-gradient(90deg, var(--primary-accent), var(--secondary-accent)); transition: width 0.3s ease; }
+        .nav-links a:hover::after, .nav-links a.active::after { width: 100%; }
+        .auth-btn { background: linear-gradient(45deg, var(--primary-accent), var(--secondary-accent)); border: none; padding: 10px 25px; color: white; font-weight: 600; border-radius: 30px; cursor: pointer; transition: transform 0.3s ease; letter-spacing: 1px; }
+        
+        .sidebar { position: fixed; top: 0; left: -350px; width: 350px; height: 100vh; background: rgba(20, 20, 28, 0.95); backdrop-filter: blur(20px); border-right: 1px solid var(--glass-border); z-index: 1001; transition: left 0.4s ease; padding: 40px; display: flex; flex-direction: column; }
+        .sidebar.active { left: 0; }
+        .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; border-bottom: 1px solid var(--glass-border); padding-bottom: 15px; }
+        .close-btn { font-size: 30px; cursor: pointer; color: var(--text-muted); }
+        .sidebar-links { display: flex; flex-direction: column; gap: 20px; }
+        .sidebar-links a { text-decoration: none; color: var(--text-main); font-size: 18px; transition: all 0.3s ease; }
+        .sidebar-links a:hover { color: var(--primary-accent); transform: translateX(10px); }
+        .menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(3px); z-index: 1000; opacity: 0; visibility: hidden; transition: all 0.4s ease; }
+        .menu-overlay.active { opacity: 1; visibility: visible; }
+
+        /* --- Seat Booking --- */
+        .page { padding: 120px 5% 50px; max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; }
+        .glass-heading { font-family: 'Agency FB', sans-serif; font-size: 50px; letter-spacing: 4px; margin-bottom: 20px; background: linear-gradient(to right, #fff, var(--text-muted)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-transform: uppercase; }
+
+        .event-selector-container { margin-bottom: 30px; display: flex; align-items: center; gap: 15px; }
+        .event-selector-container label { font-family: 'Agency FB', sans-serif; font-size: 20px; color: var(--primary-accent); letter-spacing: 1px; }
+        .event-select { appearance: none; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--glass-border); color: #fff; padding: 12px 40px 12px 20px; border-radius: 8px; font-family: 'Inter', sans-serif; font-size: 14px; cursor: pointer; outline: none; transition: border-color 0.3s; background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23FFFFFF%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right 15px top 50%; background-size: 10px auto; }
+        .event-select:focus { border-color: var(--primary-accent); }
+
+        .legend { display: flex; gap: 30px; margin-bottom: 40px; padding: 15px 30px; background: var(--surface-color); border-radius: 30px; border: 1px solid var(--glass-border); }
+        .legend-item { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--text-muted); }
+        .legend-box { width: 20px; height: 20px; border-radius: 4px; }
+        .legend-box.available { border: 1px solid var(--primary-accent); }
+        .legend-box.selected { background: var(--seat-selected); box-shadow: 0 0 10px rgba(255,74,87,0.5); }
+        .legend-box.sold { background: var(--seat-sold); }
+
+        .seating-container { width: 100%; overflow-x: auto; padding-bottom: 20px; transition: opacity 0.4s ease; }
+        .seating-container.fade { opacity: 0; }
+        .stage-container { width: 100%; display: flex; justify-content: center; margin-bottom: 50px; perspective: 500px; }
+        .stage { width: 80%; max-width: 600px; height: 60px; background: linear-gradient(to bottom, rgba(255, 74, 87, 0.2), transparent); border-top: 3px solid var(--primary-accent); border-radius: 50% 50% 0 0 / 100% 100% 0 0; display: flex; justify-content: center; align-items: center; font-family: 'Agency FB', sans-serif; font-size: 24px; letter-spacing: 5px; color: var(--primary-accent); box-shadow: 0 -10px 30px rgba(255, 74, 87, 0.1); transform: rotateX(20deg); }
+
+        .tier-section { margin-bottom: 40px; width: 100%; display: flex; flex-direction: column; align-items: center; }
+        .tier-header { font-size: 14px; color: var(--text-muted); margin-bottom: 20px; width: 100%; text-align: center; position: relative; text-transform: uppercase; letter-spacing: 2px; }
+        .tier-header::before, .tier-header::after { content: ''; position: absolute; top: 50%; width: 30%; height: 1px; background: var(--glass-border); }
+        .tier-header::before { left: 0; } .tier-header::after { right: 0; }
+        .seat-row { display: flex; align-items: center; justify-content: center; margin-bottom: 12px; gap: 10px; }
+        .row-label { width: 25px; font-weight: 600; font-size: 14px; color: var(--text-muted); text-align: center; }
+        .seat-group { display: flex; gap: 8px; }
+        .seat-group:nth-child(2) { margin-right: 30px; }
+
+        .seat { width: 30px; height: 30px; border-radius: 6px 6px 4px 4px; border: 1px solid var(--primary-accent); background: var(--seat-available); cursor: pointer; transition: all 0.2s ease; position: relative; display: flex; justify-content: center; align-items: center; font-size: 11px; font-weight: bold; color: transparent; }
+        .seat::after { content: ''; position: absolute; bottom: 3px; width: 70%; height: 2px; background: rgba(255, 74, 87, 0.3); border-radius: 2px; }
+        .seat:not(.sold):hover { background: rgba(255, 74, 87, 0.2); color: #fff; transform: scale(1.1); }
+        .seat.selected { background: var(--seat-selected); color: #fff; box-shadow: 0 0 10px rgba(255, 74, 87, 0.5); border-color: var(--seat-selected); }
+        .seat.selected::after { background: rgba(0,0,0,0.3); }
+        .seat.sold { background: var(--seat-sold); border-color: transparent; cursor: not-allowed; }
+        .seat.sold::after { display: none; }
+
+        /* --- Sticky Summary --- */
+        .summary-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(13, 13, 18, 0.95); backdrop-filter: blur(20px); border-top: 1px solid var(--primary-accent); padding: 20px 5%; display: flex; justify-content: space-between; align-items: center; z-index: 999; box-shadow: 0 -10px 40px rgba(0,0,0,0.5); transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .summary-bar.active { transform: translateY(0); }
+        .summary-details h4 { font-family: 'Agency FB', sans-serif; font-size: 24px; margin-bottom: 5px; color: #fff; }
+        .summary-details p { color: var(--text-muted); font-size: 14px; }
+        .btn-primary { background: linear-gradient(45deg, var(--primary-accent), var(--secondary-accent)); border: none; padding: 15px 40px; color: white; font-weight: bold; font-size: 16px; border-radius: 30px; cursor: pointer; transition: transform 0.3s ease, box-shadow 0.3s ease; letter-spacing: 1px; box-shadow: 0 5px 15px rgba(255, 74, 87, 0.3); }
+        .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(255, 74, 87, 0.5); }
+
+        .animate-fade-up { opacity: 0; transform: translateY(30px); animation: fadeUp 0.8s forwards ease-out; }
+        .delay-100 { animation-delay: 0.1s; } .delay-200 { animation-delay: 0.2s; }
+        @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 900px) {
+            .nav-links, .auth-btn { display: none; }
+            .seat-group:nth-child(2) { margin-right: 15px; }
+            .seat { width: 25px; height: 25px; font-size: 9px; }
+            .tier-header::before, .tier-header::after { width: 20%; }
+            .summary-bar { flex-direction: column; gap: 15px; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+   <header class="header">
+    <div class="logo-container">
+        <div class="menu-trigger" onclick="toggleMenu()">☰</div>
+        <div class="logo"><span class="logo-main">EVENT</span><span class="logo-accent">ORG</span></div>
+    </div>
+    
+    <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="events.html">Events</a></li>
+        <li><a href="register.html">Register</a></li>
+        <li><a href="community.html">Community</a></li>
+        <li><a href="merch.html">Merch</a></li>
+        <li><a href="ticket.html">Tickets</a></li>
+    </ul>
+
+  <div class="header-right">
+    <button class="auth-btn" onclick="window.location.href='login.html'">LOGIN</button>
+    
+    <button class="auth-btn" onclick="window.location.href='cart.html'">
+        CART (<span id="globalCartCount">0</span>)
+    </button>
+</div>
+</header>
+
+    <div class="menu-overlay" id="menuOverlay" onclick="toggleMenu()"></div>
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h3 style="font-family:'Agency FB'; font-size:24px; color:#fff;">QUICK MENU</h3>
+            <div class="close-btn" onclick="toggleMenu()">×</div>
+        </div>
+        <div class="sidebar-links">
+            <a href="game.html" style="color:var(--primary-accent); font-weight: bold;">⚡ Play Neon Rush</a>
+            <a href="ticket.html">Payment & Tickets</a>
+            <a href="contact.html">Support Center</a>
+        </div>
+    </div>
+
+    <section class="page">
+        <h1 class="glass-heading animate-fade-up">SELECT SEATS</h1>
+
+        <div class="event-selector-container animate-fade-up delay-100">
+            <label for="eventSelect">EVENT:</label>
+            <select id="eventSelect" class="event-select" onchange="changeEventLayout()">
+                <option value="concert">RIVIERA 2K26 (Concert)</option>
+                <option value="techTalk">TECHFEST (Tech Talk)</option>
+                <option value="theater">ROBOTICS EXPO (Theater)</option>
+            </select>
+        </div>
+        
+        <div class="legend animate-fade-up delay-100">
+            <div class="legend-item"><div class="legend-box available"></div> Available</div>
+            <div class="legend-item"><div class="legend-box selected"></div> Selected</div>
+            <div class="legend-item"><div class="legend-box sold"></div> Sold</div>
+        </div>
+
+        <div class="seating-container animate-fade-up delay-200" id="seatingContainerWrapper">
+            <div class="stage-container">
+                <div class="stage">STAGE</div>
+            </div>
+            <div id="seat-map"></div>
+        </div>
+    </section>
+
+    <div class="summary-bar" id="summaryBar">
+        <div class="summary-details">
+            <h4 id="priceDisplay">₹0</h4>
+            <p id="seatsDisplay">No seats selected</p>
+        </div>
+        <button class="btn-primary" onclick="addTicketsToCart()">ADD TO CART & CHECKOUT</button>
+    </div>
+
+<script>
+    function toggleMenu() {
+        document.getElementById('sidebar').classList.toggle('active');
+        document.getElementById('menuOverlay').classList.toggle('active');
+    }
+
+    const eventLayouts = {
+        concert: [
+            { id: 't1', name: 'VIP Area', price: 1500, rows: 2, seatsPerRow: 12, startRowLabel: 'A' },
+            { id: 't2', name: 'Gold Standing', price: 800, rows: 4, seatsPerRow: 16, startRowLabel: 'C' },
+            { id: 't3', name: 'General Seating', price: 400, rows: 6, seatsPerRow: 20, startRowLabel: 'G' }
+        ],
+        techTalk: [
+            { id: 't4', name: 'Premium Desks', price: 500, rows: 3, seatsPerRow: 8, startRowLabel: 'A' },
+            { id: 't5', name: 'Standard Seating', price: 200, rows: 5, seatsPerRow: 12, startRowLabel: 'D' }
+        ],
+        theater: [
+            { id: 't6', name: 'Stalls (Front)', price: 600, rows: 4, seatsPerRow: 14, startRowLabel: 'A' },
+            { id: 't7', name: 'Balcony', price: 300, rows: 4, seatsPerRow: 18, startRowLabel: 'E' }
+        ]
+    };
+
+    const seatMapEl = document.getElementById('seat-map');
+    const summaryBar = document.getElementById('summaryBar');
+    const seatingWrapper = document.getElementById('seatingContainerWrapper');
+    
+    let selectedSeats = [];
+    let totalPrice = 0;
+
+    function buildSeatingMap(layoutData) {
+        seatMapEl.innerHTML = '';
+        layoutData.forEach(tier => {
+            const tierDiv = document.createElement('div'); tierDiv.className = 'tier-section';
+            const tierHeader = document.createElement('div'); tierHeader.className = 'tier-header';
+            tierHeader.textContent = `${tier.name} — ₹${tier.price}`; tierDiv.appendChild(tierHeader);
+            let rowCharCode = tier.startRowLabel.charCodeAt(0);
+
+            for (let r = 0; r < tier.rows; r++) {
+                const rowLabelChar = String.fromCharCode(rowCharCode + r);
+                const rowDiv = document.createElement('div'); rowDiv.className = 'seat-row';
+                const leftLabel = document.createElement('div'); leftLabel.className = 'row-label'; leftLabel.textContent = rowLabelChar; rowDiv.appendChild(leftLabel);
+
+                const leftSideCount = Math.floor(tier.seatsPerRow / 2);
+                const leftGroup = document.createElement('div'); leftGroup.className = 'seat-group';
+                for (let s = 1; s <= leftSideCount; s++) leftGroup.appendChild(createSeat(rowLabelChar, s, tier.price, tier.name));
+                rowDiv.appendChild(leftGroup);
+
+                const rightGroup = document.createElement('div'); rightGroup.className = 'seat-group';
+                for (let s = leftSideCount + 1; s <= tier.seatsPerRow; s++) rightGroup.appendChild(createSeat(rowLabelChar, s, tier.price, tier.name));
+                rowDiv.appendChild(rightGroup);
+
+                const rightLabel = document.createElement('div'); rightLabel.className = 'row-label'; rightLabel.textContent = rowLabelChar; rowDiv.appendChild(rightLabel);
+                tierDiv.appendChild(rowDiv);
+            }
+            seatMapEl.appendChild(tierDiv);
+        });
+    }
+
+    function createSeat(row, num, price, tierName) {
+        const seat = document.createElement('div');
+        const seatId = `${row}${num}`;
+        seat.className = 'seat';
+        seat.textContent = num; 
+        if (Math.random() < 0.2) {
+            seat.classList.add('sold');
+        } else {
+            seat.addEventListener('click', () => toggleSeat(seat, seatId, price, tierName));
+        }
+        return seat;
+    }
+
+    function changeEventLayout() {
+        const selectedEvent = document.getElementById('eventSelect').value;
+        seatingWrapper.classList.add('fade');
+        setTimeout(() => {
+            selectedSeats = [];
+            totalPrice = 0;
+            updateSummary();
+            buildSeatingMap(eventLayouts[selectedEvent]);
+            seatingWrapper.classList.remove('fade');
+        }, 400);
+    }
+
+    function toggleSeat(seatEl, seatId, price, tierName) {
+        if (seatEl.classList.contains('selected')) {
+            seatEl.classList.remove('selected');
+            totalPrice -= price;
+            selectedSeats = selectedSeats.filter(s => s.id !== seatId);
+        } else {
+            if (selectedSeats.length >= 6) { alert("Max 6 seats per booking."); return; }
+            seatEl.classList.add('selected');
+            totalPrice += price;
+            selectedSeats.push({ id: seatId, price: price, tier: tierName });
+        }
+        updateSummary();
+    }
+
+    function updateSummary() {
+        if (selectedSeats.length > 0) {
+            summaryBar.classList.add('active');
+            document.getElementById('priceDisplay').textContent = `₹${totalPrice}`;
+            document.getElementById('seatsDisplay').textContent = `${selectedSeats.length} Seat(s): ${selectedSeats.map(s => s.id).join(', ')}`;
+        } else {
+            summaryBar.classList.remove('active');
+        }
+    }
+
+    // --- GROUPED INTEGRATION LOGIC ---
+    function addTicketsToCart() {
+        if (selectedSeats.length === 0) return;
+
+        let cart = JSON.parse(localStorage.getItem('eventOrgCart')) || [];
+        const eventName = document.getElementById('eventSelect').options[document.getElementById('eventSelect').selectedIndex].text;
+
+        // 1. Get unique tiers from the selection
+        const tiersSelected = [...new Set(selectedSeats.map(s => s.tier))];
+
+        tiersSelected.forEach(tierName => {
+            // Find all seats belonging to this tier
+            const seatsInTier = selectedSeats.filter(s => s.tier === tierName);
+            const seatNumbers = seatsInTier.map(s => s.id).join(', ');
+            const tierPrice = seatsInTier[0].price;
+
+            // Create a Grouped ID (e.g., TKT-Concert-VIP-Area)
+            const groupedId = `TKT-${eventName}-${tierName}`.replace(/\s+/g, '-');
+
+            const ticketItem = {
+                id: groupedId,
+                title: `${eventName} - ${tierName}`,
+                // We combine the seat numbers into the title display logic used by the cart
+                seats: seatNumbers, 
+                price: tierPrice,
+                img: "", // No image for tickets
+                type: 'ticket',
+                quantity: seatsInTier.length // Numerical count of tickets
+            };
+
+            // Remove any existing ticket group of same ID in cart to prevent duplicates, then add new
+            cart = cart.filter(item => item.id !== groupedId);
+            cart.push(ticketItem);
+        });
+
+        localStorage.setItem('eventOrgCart', JSON.stringify(cart));
+        window.location.href = 'cart.html';
+    }
+
+    buildSeatingMap(eventLayouts.concert);
+</script>
+</body>
+</html>

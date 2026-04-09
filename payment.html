@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout | EventOrg</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Agency+FB:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #050508;
+            --primary: #ff4a57;
+            --secondary: #ff8f70;
+            --accent-blue: #00f2fe;
+            --surface: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --success: #00e676;
+            --text-muted: #a0a0b0;
+            --text-main: #ffffff;
+            --primary-accent: #ff4a57;
+            --secondary-accent: #ff8f70;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg-color); 
+            color: #fff; 
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Animated Background */
+        .bg-grid {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: linear-gradient(rgba(255, 74, 87, 0.05) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(255, 74, 87, 0.05) 1px, transparent 1px);
+            background-size: 60px 60px;
+            z-index: -1;
+            mask-image: radial-gradient(circle at center, black, transparent 80%);
+            transform: perspective(1000px) rotateX(60deg) translateY(-100px);
+            animation: moveGrid 20s linear infinite;
+        }
+        @keyframes moveGrid { from { background-position: 0 0; } to { background-position: 0 60px; } }
+
+        /* Unified Header */
+        .header { position: fixed; top: 0; width: 100%; height: 80px; display: flex; justify-content: space-between; align-items: center; padding: 0 5%; background: rgba(5, 5, 8, 0.8); backdrop-filter: blur(20px); border-bottom: 1px solid var(--glass-border); z-index: 1000; }
+        .logo-container { display: flex; align-items: center; gap: 20px; }
+        .logo { font-family: 'Agency FB'; font-size: 32px; letter-spacing: 2px; font-weight: bold; }
+        .logo span { color: var(--primary); }
+        .nav-links { display: flex; list-style: none; gap: 30px; }
+        .nav-links a { text-decoration: none; color: #a0a0b0; font-size: 13px; text-transform: uppercase; font-weight: 600; transition: 0.3s; }
+        .nav-links a:hover { color: #fff; }
+
+        .payment-container { padding: 120px 5% 60px; display: flex; flex-direction: column; align-items: center; position: relative; }
+
+        /* --- VIRTUAL CARD PREVIEW --- */
+        .card-preview {
+            width: 380px; height: 220px;
+            background: linear-gradient(135deg, #222, #000);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: -110px;
+            z-index: 10;
+            position: relative;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.8), inset 0 0 0 1px rgba(255,255,255,0.1);
+            transition: 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+        .card-preview.flipped { transform: rotateY(180deg); }
+        .card-chip { width: 50px; height: 40px; background: linear-gradient(45deg, #d4af37, #f9d976); border-radius: 8px; margin-bottom: 30px; }
+        .card-number { font-family: 'JetBrains Mono'; font-size: 22px; letter-spacing: 2px; color: #fff; margin-bottom: 25px; min-height: 30px; }
+        .card-bottom { display: flex; justify-content: space-between; text-transform: uppercase; font-size: 12px; color: #888; font-family: 'JetBrains Mono'; }
+        .card-back {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: #111; border-radius: 20px; display: flex; flex-direction: column;
+            justify-content: center; transform: rotateY(180deg); backface-visibility: hidden;
+        }
+        .black-strip { width: 100%; height: 50px; background: #000; margin-bottom: 20px; }
+        .cvv-strip { width: 80%; height: 40px; background: #fff; margin: 0 auto; display: flex; align-items: center; justify-content: flex-end; padding-right: 15px; color: #000; font-weight: bold; }
+
+        /* --- PAYMENT BOX --- */
+        .payment-box {
+            background: rgba(13, 13, 20, 0.8);
+            backdrop-filter: blur(40px);
+            border: 1px solid var(--glass-border);
+            border-radius: 30px;
+            width: 100%; max-width: 550px;
+            padding: 140px 50px 50px;
+            box-shadow: 0 50px 100px rgba(0,0,0,0.5);
+        }
+
+        .total-badge { text-align: center; margin-bottom: 40px; }
+        .total-badge p { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 2px; }
+        .total-badge h2 { font-family: 'Agency FB'; font-size: 50px; color: #fff; }
+
+        .method-selector { display: flex; gap: 15px; margin-bottom: 30px; }
+        .method-tab {
+            flex: 1; padding: 15px; border-radius: 15px; border: 1px solid var(--glass-border);
+            background: rgba(255,255,255,0.02); cursor: pointer; text-align: center;
+            font-weight: 600; font-size: 13px; transition: 0.3s;
+        }
+        .method-tab.active { background: rgba(255,74,87,0.1); border-color: var(--primary); color: var(--primary); }
+
+        .input-wrap { margin-bottom: 20px; }
+        .input-wrap label { display: block; font-size: 11px; color: #666; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1px; }
+        .input-wrap input {
+            width: 100%; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border);
+            padding: 15px; border-radius: 12px; color: #fff; font-family: 'JetBrains Mono';
+            outline: none; transition: 0.3s;
+        }
+        .input-wrap input:focus { border-color: var(--primary); background: rgba(255,74,87,0.05); }
+
+        .pay-btn {
+            width: 100%; padding: 20px; border-radius: 40px; border: none;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            color: #fff; font-family: 'Agency FB'; font-size: 24px; letter-spacing: 2px;
+            cursor: pointer; transition: 0.4s; position: relative; overflow: hidden;
+            box-shadow: 0 10px 30px rgba(255, 74, 87, 0.4);
+        }
+        .pay-btn:hover { transform: translateY(-5px); filter: brightness(1.2); }
+        .pay-btn:disabled { background: #333; box-shadow: none; cursor: not-allowed; filter: grayscale(1); }
+
+        .auth-btn { 
+            background: linear-gradient(45deg, var(--primary-accent), var(--secondary-accent)); 
+            border: none; padding: 10px 25px; color: white; font-weight: 600; 
+            border-radius: 30px; cursor: pointer; margin-left: 10px;
+        }
+
+        @media (max-width: 500px) {
+            .card-preview { width: 320px; height: 190px; }
+            .payment-box { padding: 120px 25px 30px; }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-grid"></div>
+
+    <header class="header">
+        <div class="logo-container">
+            <div class="logo">
+                <span class="logo-main">EVENT</span><span class="logo-accent">ORG</span>
+            </div>
+        </div>
+
+        <ul class="nav-links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="events.html">Events</a></li>
+            <li><a href="merch.html">Merch</a></li>
+            <li><a href="ticket.html">Tickets</a></li>
+        </ul>
+
+        <div class="header-right">
+            <button class="auth-btn" onclick="window.location.href='cart.html'">
+                CART (<span id="globalCartCount">0</span>)
+            </button>
+        </div>
+    </header>
+
+    <div id="payment-root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const PaymentApp = () => {
+            const [total, setTotal] = useState(0);
+            const [method, setMethod] = useState('card');
+            const [formData, setFormData] = useState({ 
+                number: '', name: '', expiry: '', cvv: '', upi: '' 
+            });
+            const [isFlipped, setIsFlipped] = useState(false);
+            const [status, setStatus] = useState('idle');
+
+            useEffect(() => {
+                // 1. Try to get total from checkout total key (includes tax)
+                const savedTotal = localStorage.getItem('eventOrgCheckoutTotal');
+                
+                if (savedTotal && parseFloat(savedTotal) > 0) {
+                    setTotal(parseFloat(savedTotal));
+                } else {
+                    // 2. Fallback: Calculate from cart if direct total is missing
+                    const rawCart = localStorage.getItem('eventOrgCart');
+                    if (rawCart) {
+                        const cart = JSON.parse(rawCart);
+                        const subtotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+                        setTotal(subtotal * 1.05); // Subtotal + 5% GST
+                    }
+                }
+
+                // Update Header Cart Badge
+                const rawCart = localStorage.getItem('eventOrgCart');
+                const cartData = rawCart ? JSON.parse(rawCart) : [];
+                const count = cartData.reduce((s, i) => s + (i.quantity || 1), 0);
+                document.getElementById('globalCartCount').innerText = count;
+            }, []);
+
+            const handleCardInput = (e) => {
+                let { name, value } = e.target;
+                if(name === 'number') {
+                    value = value.replace(/\D/g, '').replace(/(.{4})/g, '$1 ').trim().slice(0, 19);
+                }
+                if(name === 'expiry') {
+                    value = value.replace(/\D/g, '').replace(/(.{2})/, '$1/').trim().slice(0, 5);
+                }
+                if(name === 'cvv') value = value.slice(0, 3);
+                setFormData({ ...formData, [name]: value });
+            };
+
+            const isFormValid = () => {
+                if (method === 'card') {
+                    return formData.number.length >= 19 && formData.name && formData.expiry.length === 5 && formData.cvv.length === 3;
+                }
+                return formData.upi.includes('@');
+            };
+
+            const processPayment = () => {
+                setStatus('processing');
+                setTimeout(() => {
+                    localStorage.removeItem('eventOrgCart');
+                    localStorage.removeItem('eventOrgCheckoutTotal');
+                    setStatus('success');
+                    confetti({
+                        particleCount: 150,
+                        spread: 70,
+                        origin: { y: 0.6 },
+                        colors: ['#ff4a57', '#00f2fe', '#00e676']
+                    });
+                }, 2500);
+            };
+
+            if (status === 'success') {
+                return (
+                    <div className="payment-container">
+                        <div className="payment-box success-screen" style={{paddingTop: '50px'}}>
+                            <div className="check-anim">✓</div>
+                            <h1 style={{fontFamily: 'Agency FB', fontSize: '40px', marginBottom: '10px'}}>PAYMENT SUCCESS!</h1>
+                            <p style={{color: '#888', marginBottom: '30px'}}>A confirmation email has been sent. Your digital ID is ready.</p>
+                            <div style={{background: 'rgba(255,255,255,0.05)', padding: '20px', borderRadius: '15px', textAlign: 'left', marginBottom: '30px'}}>
+                                <div style={{display:'flex', justifyContent:'space-between', marginBottom:'10px'}}><span>Txn ID:</span><span style={{color: '#aaa'}}>#EO-992144</span></div>
+                                <div style={{display:'flex', justifyContent:'space-between'}}><span>Amount:</span><span style={{color: 'var(--success)', fontWeight:'bold'}}>₹{total.toLocaleString()}</span></div>
+                            </div>
+                            <button className="pay-btn" onClick={() => window.location.href='index.html'}>RETURN HOME</button>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="payment-container">
+                    {method === 'card' && (
+                        <div className={`card-preview ${isFlipped ? 'flipped' : ''}`}>
+                            <div className="card-chip"></div>
+                            <div className="card-number">{formData.number || '•••• •••• •••• ••••'}</div>
+                            <div className="card-bottom">
+                                <div><label style={{fontSize:'8px', display:'block'}}>Holder</label>{formData.name || 'FULL NAME'}</div>
+                                <div><label style={{fontSize:'8px', display:'block'}}>Expires</label>{formData.expiry || 'MM/YY'}</div>
+                            </div>
+                            <div className="card-back">
+                                <div className="black-strip"></div>
+                                <div className="cvv-strip">{formData.cvv || '•••'}</div>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="payment-box">
+                        <div className="total-badge">
+                            <p>Transaction Total</p>
+                            <h2>₹{total.toLocaleString()}</h2>
+                        </div>
+
+                        <div className="method-selector">
+                            <div className={`method-tab ${method === 'card' ? 'active' : ''}`} onClick={() => setMethod('card')}>CREDIT CARD</div>
+                            <div className={`method-tab ${method === 'upi' ? 'active' : ''}`} onClick={() => setMethod('upi')}>UPI ID</div>
+                        </div>
+
+                        <div className="form-content">
+                            {method === 'card' ? (
+                                <React.Fragment>
+                                    <div className="input-wrap">
+                                        <label>Card Number</label>
+                                        <input name="number" placeholder="0000 0000 0000 0000" value={formData.number} onChange={handleCardInput} onFocus={() => setIsFlipped(false)} />
+                                    </div>
+                                    <div className="input-wrap">
+                                        <label>Cardholder Name</label>
+                                        <input name="name" placeholder="JOHN DOE" value={formData.name} onChange={handleCardInput} onFocus={() => setIsFlipped(false)} />
+                                    </div>
+                                    <div style={{display: 'flex', gap: '20px'}}>
+                                        <div className="input-wrap" style={{flex: 1}}>
+                                            <label>Expiry</label>
+                                            <input name="expiry" placeholder="MM/YY" value={formData.expiry} onChange={handleCardInput} onFocus={() => setIsFlipped(false)} />
+                                        </div>
+                                        <div className="input-wrap" style={{flex: 1}}>
+                                            <label>CVV</label>
+                                            <input name="cvv" type="password" placeholder="***" value={formData.cvv} onChange={handleCardInput} onFocus={() => setIsFlipped(true)} onBlur={() => setIsFlipped(false)} />
+                                        </div>
+                                    </div>
+                                </React.Fragment>
+                            ) : (
+                                <div className="input-wrap">
+                                    <label>Unified Payment Interface ID</label>
+                                    <input name="upi" placeholder="username@bank" value={formData.upi} onChange={(e) => setFormData({...formData, upi: e.target.value})} />
+                                    <p style={{fontSize:'10px', color: '#555', marginTop:'10px'}}>Verification request will be sent to your UPI app.</p>
+                                </div>
+                            )}
+
+                            <button 
+                                className="pay-btn" 
+                                disabled={!isFormValid() || status === 'processing'}
+                                onClick={processPayment}
+                            >
+                                {status === 'processing' ? 'ENCRYPTING...' : `AUTHORIZE PAYMENT ₹${total.toLocaleString()}`}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('payment-root'));
+        root.render(<PaymentApp />);
+    </script>
+</body>
+</html>

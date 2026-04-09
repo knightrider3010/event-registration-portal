@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register | EventOrg</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Agency+FB&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Base Theme Variables */
+        :root {
+            --bg-color: #0d0d12;
+            --surface-color: rgba(255, 255, 255, 0.05);
+            --primary-accent: #ff4a57;
+            --secondary-accent: #ff8f70;
+            --success-color: #00e676;
+            --text-main: #ffffff;
+            --text-muted: #a0a0b0;
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* --- Header & Sidebar --- */
+        .header { position: fixed; top: 0; width: 100%; height: 80px; display: flex; justify-content: space-between; align-items: center; padding: 0 5%; background: rgba(13, 13, 18, 0.8); backdrop-filter: blur(15px); border-bottom: 1px solid var(--glass-border); z-index: 1000; }
+        .logo-container { display: flex; align-items: center; gap: 20px; }
+        .menu-trigger { font-size: 24px; cursor: pointer; color: var(--text-main); transition: color 0.3s; }
+        .menu-trigger:hover { color: var(--primary-accent); }
+        .logo { font-family: 'Agency FB', sans-serif; font-size: 32px; font-weight: bold; letter-spacing: 2px; }
+        .logo-main { color: var(--text-main); } .logo-accent { color: var(--primary-accent); }
+        .nav-links { display: flex; list-style: none; gap: 30px; }
+        .nav-links a { text-decoration: none; color: var(--text-muted); font-weight: 600; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s ease; position: relative; }
+        .nav-links a:hover, .nav-links a.active { color: var(--text-main); }
+        .nav-links a::after { content: ''; position: absolute; width: 0; height: 2px; bottom: -5px; left: 0; background: linear-gradient(90deg, var(--primary-accent), var(--secondary-accent)); transition: width 0.3s ease; }
+        .nav-links a:hover::after, .nav-links a.active::after { width: 100%; }
+        .auth-btn { background: linear-gradient(45deg, var(--primary-accent), var(--secondary-accent)); border: none; padding: 10px 25px; color: white; font-weight: 600; border-radius: 30px; cursor: pointer; transition: transform 0.3s ease, box-shadow 0.3s; letter-spacing: 1px; }
+        .auth-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255, 74, 87, 0.4); }
+
+        .sidebar { position: fixed; top: 0; left: -350px; width: 350px; height: 100vh; background: rgba(20, 20, 28, 0.95); backdrop-filter: blur(20px); border-right: 1px solid var(--glass-border); z-index: 1001; transition: left 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); padding: 40px; display: flex; flex-direction: column; }
+        .sidebar.active { left: 0; }
+        .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; border-bottom: 1px solid var(--glass-border); padding-bottom: 15px; }
+        .close-btn { font-size: 30px; cursor: pointer; color: var(--text-muted); transition: color 0.3s; }
+        .close-btn:hover { color: var(--primary-accent); }
+        .sidebar-links { display: flex; flex-direction: column; gap: 20px; }
+        .sidebar-links a { text-decoration: none; color: var(--text-main); font-size: 18px; transition: all 0.3s ease; }
+        .sidebar-links a:hover { color: var(--primary-accent); transform: translateX(10px); }
+        .menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(3px); z-index: 1000; opacity: 0; visibility: hidden; transition: all 0.4s ease; }
+        .menu-overlay.active { opacity: 1; visibility: visible; }
+
+        /* --- Split Layout --- */
+        .split-layout {
+            display: flex;
+            min-height: 100vh;
+            width: 100vw;
+            padding-top: 80px; /* Offset for header */
+        }
+
+        /* Left Side: Visual Showcase */
+        .visual-panel {
+            flex: 1.2; /* Takes slightly more than half the screen */
+            position: relative;
+            background: #000;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 60px;
+        }
+
+        /* Seamless blend into the right panel */
+        .visual-panel::after {
+            content: '';
+            position: absolute;
+            top: 0; right: 0;
+            width: 150px; height: 100%;
+            background: linear-gradient(to right, transparent, var(--bg-color));
+            z-index: 2;
+        }
+        
+        .visual-panel::before {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0;
+            width: 100%; height: 50%;
+            background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+            z-index: 2;
+        }
+
+        /* Image Slideshow */
+        .slideshow { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+        .slide { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 1.5s ease-in-out, transform 10s linear; transform: scale(1.05); }
+        .slide.active { opacity: 0.7; transform: scale(1); }
+
+        .visual-content { position: relative; z-index: 3; }
+        .visual-title { font-family: 'Agency FB', sans-serif; font-size: 70px; line-height: 1; color: #fff; text-transform: uppercase; margin-bottom: 10px; text-shadow: 0 10px 30px rgba(0,0,0,0.8); letter-spacing: 2px; }
+        .visual-desc { font-size: 18px; color: #ddd; max-width: 500px; line-height: 1.6; text-shadow: 0 5px 15px rgba(0,0,0,0.8); }
+
+        /* Right Side: Form Panel */
+        .form-panel {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 5%;
+            background: var(--bg-color);
+            position: relative;
+            z-index: 3;
+        }
+
+        .reg-container {
+            width: 100%;
+            max-width: 650px; /* Wider, breathing room */
+            padding: 20px;
+        }
+
+        .glass-heading { font-family: 'Agency FB', sans-serif; font-size: 48px; letter-spacing: 3px; margin-bottom: 10px; color: #fff; text-transform: uppercase; }
+        .sub-heading { color: var(--text-muted); font-size: 15px; margin-bottom: 40px; }
+
+        /* Custom Tab Toggle */
+        .tab-toggle-container {
+            display: flex; background: rgba(255,255,255,0.03); border-radius: 30px; padding: 5px;
+            margin-bottom: 40px; width: 100%; position: relative; border: 1px solid var(--glass-border);
+        }
+
+        .tab-btn {
+            flex: 1; padding: 15px 20px; border: none; background: transparent;
+            color: var(--text-muted); font-weight: 600; font-size: 14px;
+            border-radius: 25px; cursor: pointer; transition: all 0.4s ease; z-index: 2; position: relative; font-family: 'Inter', sans-serif;
+        }
+        .tab-btn.active { color: #fff; }
+        
+        .tab-slider {
+            position: absolute; top: 5px; left: 5px; height: calc(100% - 10px); width: calc(50% - 5px);
+            background: linear-gradient(45deg, var(--primary-accent), var(--secondary-accent));
+            border-radius: 25px; transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 1;
+        }
+        .host-active .tab-slider { transform: translateX(100%); }
+
+        /* Form Layouts */
+        .form-wrapper { position: relative; min-height: 400px; }
+        .reg-form { display: flex; flex-direction: column; gap: 20px; transition: opacity 0.4s ease, transform 0.4s ease; position: absolute; width: 100%; top: 0; left: 0; opacity: 0; visibility: hidden; transform: translateY(20px); }
+        .reg-form.active { opacity: 1; visibility: visible; transform: translateY(0); position: relative; }
+
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+        /* Input Styles */
+        .input-group { display: flex; flex-direction: column; gap: 8px; }
+        .input-group.full-width { grid-column: 1 / -1; }
+        .input-group label { font-size: 13px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; padding-left: 5px; }
+        
+        .input-group input, .input-group select, .input-group textarea {
+            width: 100%; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--glass-border);
+            color: #fff; padding: 15px 20px; border-radius: 12px; outline: none; transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif; font-size: 15px;
+        }
+        .input-group textarea { resize: vertical; min-height: 120px; }
+        .input-group input:focus, .input-group select:focus, .input-group textarea:focus {
+            border-color: var(--primary-accent); background: rgba(255, 74, 87, 0.05); box-shadow: 0 0 15px rgba(255, 74, 87, 0.1);
+        }
+        .input-group select option { background: #1a1a24; color: #fff; }
+
+        .btn-submit {
+            background: linear-gradient(45deg, var(--primary-accent), var(--secondary-accent));
+            border: none; padding: 18px; color: white; font-weight: bold; font-size: 16px; border-radius: 12px;
+            cursor: pointer; transition: all 0.3s ease; letter-spacing: 2px; font-family: 'Agency FB', sans-serif;
+            margin-top: 10px; width: 100%; box-shadow: 0 10px 20px rgba(255, 74, 87, 0.2);
+        }
+        .btn-submit:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(255, 74, 87, 0.4); }
+
+        /* --- Success Modal --- */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(5px); z-index: 2000; display: flex; justify-content: center; align-items: center; opacity: 0; visibility: hidden; transition: all 0.3s ease; }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        
+        .modal-box { background: rgba(20, 20, 28, 0.95); border: 1px solid var(--glass-border); border-radius: 24px; width: 90%; max-width: 450px; padding: 50px 40px; text-align: center; transform: scale(0.9); transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: 0 30px 60px rgba(0,0,0,0.8); }
+        .modal-overlay.active .modal-box { transform: scale(1); }
+
+        .success-icon { width: 80px; height: 80px; background: rgba(0, 230, 118, 0.1); border: 2px solid var(--success-color); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 40px; color: var(--success-color); margin: 0 auto 25px; box-shadow: 0 0 30px rgba(0, 230, 118, 0.3); }
+        .modal-box h2 { font-family: 'Agency FB', sans-serif; font-size: 36px; color: #fff; margin-bottom: 15px; letter-spacing: 1px; }
+        .modal-box p { color: var(--text-muted); font-size: 15px; margin-bottom: 30px; line-height: 1.5; }
+        
+        /* --- AI Bot --- */
+        .ai-bot-trigger { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; background: linear-gradient(135deg, var(--primary-accent), var(--secondary-accent)); border-radius: 50%; display: flex; justify-content: center; align-items: center; color: #fff; font-weight: bold; font-family: 'Agency FB', sans-serif; font-size: 24px; cursor: pointer; box-shadow: 0 10px 30px rgba(255, 74, 87, 0.4); z-index: 1000; }
+        .ai-chat-window { position: fixed; bottom: 110px; right: 30px; width: 350px; height: 450px; background: rgba(20, 20, 28, 0.95); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 20px; display: flex; flex-direction: column; opacity: 0; visibility: hidden; z-index: 1000; }
+        .ai-chat-window.active { opacity: 1; visibility: visible; }
+        .ai-header { padding: 20px; border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; font-weight: bold; }
+        .ai-header span:last-child { cursor: pointer; color: var(--text-muted); }
+
+        /* Animations */
+        .animate-fade { opacity: 0; animation: fadeIn 1s forwards ease-out; }
+        .animate-slide-up { opacity: 0; transform: translateY(30px); animation: slideUp 0.8s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .delay-100 { animation-delay: 0.1s; } .delay-200 { animation-delay: 0.2s; }
+        @keyframes fadeIn { to { opacity: 1; } }
+        @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 900px) {
+            .split-layout { flex-direction: column; }
+            .visual-panel { min-height: 40vh; padding: 40px 5%; justify-content: center; text-align: center; }
+            .visual-panel::after { display: none; }
+            .visual-panel::before { background: linear-gradient(to top, var(--bg-color), transparent); height: 100%; }
+            .visual-title { font-size: 50px; }
+            .form-panel { padding: 40px 5%; }
+            .nav-links, .auth-btn { display: none; }
+            .form-grid { grid-template-columns: 1fr; gap: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+    <div class="logo-container">
+        <div class="menu-trigger" onclick="toggleMenu()">☰</div>
+        <div class="logo"><span class="logo-main">EVENT</span><span class="logo-accent">ORG</span></div>
+    </div>
+    
+    <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="events.html">Events</a></li>
+        <li><a href="register.html">Register</a></li>
+        <li><a href="community.html">Community</a></li>
+        <li><a href="merch.html">Merch</a></li>
+        <li><a href="ticket.html">Tickets</a></li>
+    </ul>
+
+  <div class="header-right">
+    <button class="auth-btn" onclick="window.location.href='login.html'">LOGIN</button>
+    
+    <button class="auth-btn" onclick="window.location.href='cart.html'">
+        CART (<span id="globalCartCount">0</span>)
+    </button>
+</div>
+</header>
+
+    <div class="menu-overlay" id="menuOverlay" onclick="toggleMenu()"></div>
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h3 style="font-family:'Agency FB'; font-size:24px; color:#fff;">QUICK MENU</h3>
+            <div class="close-btn" onclick="toggleMenu()">×</div>
+        </div>
+        <div class="sidebar-links">
+            <a href="game.html" style="color:var(--primary-accent); font-weight: bold;">⚡ Play Neon Rush</a>
+            <a href="ticket.html">Payment & Tickets</a>
+            <a href="contact.html">Support Center</a>
+        </div>
+    </div>
+
+    <section class="split-layout">
+        
+        <div class="visual-panel animate-fade">
+            <div class="slideshow" id="slideshow">
+                <img src="https://images.unsplash.com/photo-1540039155732-684735035726?auto=format&fit=crop&q=80&w=1200" class="slide active" alt="Concert Event">
+                <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&q=80&w=1200" class="slide" alt="Tech Expo">
+                <img src="https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&q=80&w=1200" class="slide" alt="University Campus">
+            </div>
+            <div class="visual-content animate-slide-up delay-100">
+                <h1 class="visual-title">GLOBAL STAGE.<br>ONE NETWORK.</h1>
+                <p class="visual-desc">Access 500+ premier university festivals, tech expos, and hackathons worldwide. Whether you're attending or hosting, EventOrg connects you directly to the epicenter of campus innovation.</p>
+            </div>
+        </div>
+
+        <div class="form-panel animate-slide-up delay-200">
+            <div class="reg-container">
+                <h2 class="glass-heading">Registration</h2>
+                <p class="sub-heading">Join the ecosystem. Secure your spot or propose a showcase.</p>
+
+                <div class="tab-toggle-container" id="tabContainer">
+                    <div class="tab-slider"></div>
+                    <button class="tab-btn active" id="btnAttendee" onclick="switchRegTab('attendee')">Join as Attendee</button>
+                    <button class="tab-btn" id="btnHost" onclick="switchRegTab('host')">External Team Proposal</button>
+                </div>
+
+                <div class="form-wrapper">
+                    <form id="attendeeForm" class="reg-form active" onsubmit="handleFormSubmit(event, 'attendee')">
+                        <div class="form-grid">
+                            <div class="input-group">
+                                <label>Full Name</label>
+                                <input type="text" placeholder="e.g., John Doe" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Email Address</label>
+                                <input type="email" placeholder="you@university.edu" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Target University</label>
+                                <select required>
+                                    <option value="" disabled selected>Select Destination...</option>
+                                    <option>VIT University</option>
+                                    <option>IIT Bombay</option>
+                                    <option>Stanford University</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label>Event Category</label>
+                                <select required>
+                                    <option value="" disabled selected>Select Interest...</option>
+                                    <option>Cultural Fest (Riviera 2K26)</option>
+                                    <option>Tech Fest (Gravitas 2K26)</option>
+                                    <option>Agri-Food Tech Innovation</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-submit">PROCEED TO TICKETS</button>
+                    </form>
+
+                    <form id="hostForm" class="reg-form" onsubmit="handleFormSubmit(event, 'host')">
+                        <p style="margin-top:-10px; margin-bottom:20px; color:#bbb; font-size:14px;">
+                            Propose workshops, hackathons, or demos to be hosted at affiliate campuses.
+                        </p>
+                        <div class="form-grid">
+                            <div class="input-group">
+                                <label>Team / Organization Name</label>
+                                <input type="text" placeholder="e.g., CircuitBreakers Robotics" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Base Location / City</label>
+                                <input type="text" placeholder="e.g., New York, NY" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Host University Destination</label>
+                                <select required>
+                                    <option value="" disabled selected>Where do you want to present?</option>
+                                    <option>VIT University</option>
+                                    <option>MIT Campus</option>
+                                    <option>NUS Singapore</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label>Project / Event Title</label>
+                                <input type="text" placeholder="What are you showcasing?" required>
+                            </div>
+                            <div class="input-group full-width">
+                                <label>Proposal Description</label>
+                                <textarea placeholder="Describe your team's objective, requirements, and what attendees will learn..." required></textarea>
+                            </div>
+                            <div class="input-group full-width">
+                                <label>Portfolio / Demo Link</label>
+                                <input type="url" placeholder="https://your-project-link.com">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-submit">SUBMIT PROPOSAL</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="modal-overlay" id="successModalOverlay">
+        <div class="modal-box">
+            <div class="success-icon">✓</div>
+            <h2 id="modalTitle" style="font-family:'Agency FB'; font-size:36px; color:#fff;">Complete</h2>
+            <p id="modalDesc" style="color:#aaa; margin-bottom:30px;">Action successful.</p>
+            <button class="btn-submit" onclick="closeModalAndRedirect()">CONTINUE</button>
+        </div>
+    </div>
+
+    <div class="ai-bot-trigger" onclick="toggleAI()">AI</div>
+    <div class="ai-chat-window" id="aiChatWindow">
+        <div class="ai-header"><span>EventOrg AI</span><span onclick="toggleAI()">×</span></div>
+        <div class="ai-messages" style="padding:15px; color:var(--text-muted); font-size:14px;">
+            Need help deciding? If you have a working prototype, the "External Team Proposal" is a great way to get a booth at major fests!
+        </div>
+    </div>
+
+    <script>
+        // --- Navigation Toggles ---
+        function toggleMenu() {
+            document.getElementById('sidebar').classList.toggle('active');
+            document.getElementById('menuOverlay').classList.toggle('active');
+        }
+
+        function toggleAI() {
+            document.getElementById('aiChatWindow').classList.toggle('active');
+        }
+
+        // --- Image Slideshow Logic ---
+        let slideIndex = 0;
+        const slides = document.querySelectorAll('.slide');
+        
+        function rotateSlides() {
+            slides[slideIndex].classList.remove('active');
+            slideIndex = (slideIndex + 1) % slides.length;
+            slides[slideIndex].classList.add('active');
+        }
+        setInterval(rotateSlides, 4000); // Crossfade every 4 seconds
+
+        // --- Tab Switching Logic ---
+        function switchRegTab(tabType) {
+            const container = document.getElementById('tabContainer');
+            const btnAtt = document.getElementById('btnAttendee');
+            const btnHost = document.getElementById('btnHost');
+            const formAtt = document.getElementById('attendeeForm');
+            const formHost = document.getElementById('hostForm');
+
+            if (tabType === 'host') {
+                container.classList.add('host-active');
+                btnHost.classList.add('active');
+                btnAtt.classList.remove('active');
+                
+                formAtt.classList.remove('active');
+                setTimeout(() => { formHost.classList.add('active'); }, 200); 
+            } else {
+                container.classList.remove('host-active');
+                btnAtt.classList.add('active');
+                btnHost.classList.remove('active');
+                
+                formHost.classList.remove('active');
+                setTimeout(() => { formAtt.classList.add('active'); }, 200);
+            }
+        }
+
+        // --- Form Submission Logic ---
+        function handleFormSubmit(event, type) {
+            event.preventDefault(); 
+
+            const modalTitle = document.getElementById('modalTitle');
+            const modalDesc = document.getElementById('modalDesc');
+            
+            if (type === 'attendee') {
+                modalTitle.innerText = "Welcome Aboard!";
+                modalDesc.innerText = "Your attendee profile is ready. You will now be redirected to the ticketing portal to secure your spot.";
+            } else {
+                modalTitle.innerText = "Proposal Submitted!";
+                modalDesc.innerText = "Your external team request has been sent to the University Committee. We will review it and get back to you within 48 hours.";
+            }
+
+            document.getElementById('successModalOverlay').classList.add('active');
+        }
+
+        function closeModalAndRedirect() {
+            document.getElementById('successModalOverlay').classList.remove('active');
+            
+            if (document.getElementById('btnAttendee').classList.contains('active')) {
+                window.location.href = 'ticket.html';
+            } else {
+                window.location.href = 'index.html';
+            }
+        }
+    </script>
+</body>
+</html>
